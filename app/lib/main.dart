@@ -19,6 +19,7 @@ Future<void> main() async {
         minimumSize: Size(980, 640),
         center: true,
         title: 'Northstar Notes',
+        titleBarStyle: TitleBarStyle.hidden,
       );
       await windowManager.waitUntilReadyToShow(opts, () async {
         await windowManager.show();

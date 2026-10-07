@@ -31,6 +31,7 @@ class _NoteAppState extends State<NoteApp> {
   late final nv.AppState _appState = nv.AppState(initial: widget.initialTheme, initialZoom: widget.initialZoom, prefs: widget.prefs);
   StreamSubscription<AppUser?>? _userSub;
   int _sessionGen = 0;
+  bool _seeding = false;
   @override
   void initState() {
     super.initState();
@@ -70,26 +71,32 @@ class _NoteAppState extends State<NoteApp> {
     } catch (_) {}
   }
   Future<void> _seedWelcome(String userId, {bool force = false}) async {
-    final key = 'welcomed_$userId';
-    bool done = false;
+    if (_seeding) return;
+    _seeding = true;
     try {
-      done = widget.prefs?.getBool(key) ?? false;
-    } catch (_) {}
-    if (done && !force) return;
-    if (!force && _notes.visible.isNotEmpty) {
+      final key = 'welcomed_$userId';
+      bool done = false;
+      try {
+        done = widget.prefs?.getBool(key) ?? false;
+      } catch (_) {}
+      final hasWelcome = _notes.allNotes.any((n) => n.title == 'Добро пожаловать');
+      if ((done || hasWelcome || _notes.allNotes.isNotEmpty) && !force) {
+        try {
+          await widget.prefs?.setBool(key, true);
+        } catch (_) {}
+        return;
+      }
+      await _notes.create(inFolder: 'Inbox');
+      final note = _notes.selected;
+      if (note != null) {
+        await _notes.patch(note, title: 'Добро пожаловать', body: _welcomeBody);
+      }
       try {
         await widget.prefs?.setBool(key, true);
       } catch (_) {}
-      return;
+    } finally {
+      _seeding = false;
     }
-    await _notes.create(inFolder: 'Inbox');
-    final note = _notes.selected;
-    if (note != null) {
-      await _notes.patch(note, title: 'Добро пожаловать', body: _welcomeBody);
-    }
-    try {
-      await widget.prefs?.setBool(key, true);
-    } catch (_) {}
   }
   static const _welcomeBody = '''Это живое демо Northstar - всё ниже можно трогать.
 # Задачи

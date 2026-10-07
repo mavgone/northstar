@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:window_manager/window_manager.dart';
 import '../../core/design/tokens.dart';
 import '../../core/widgets/primitives.dart';
 import '../../domain/models.dart';
@@ -616,7 +619,7 @@ class _EditorPaneState extends State<EditorPane> {
   }
   Widget _toolbar(BuildContext context, Note note, bool trashed) {
     final t = context.tokens;
-    return Container(
+    final bar = Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       decoration: BoxDecoration(border: Border(bottom: BorderSide(color: t.border))),
       child: Row(
@@ -676,10 +679,48 @@ class _EditorPaneState extends State<EditorPane> {
               onPressed: () => widget.vm.deleteForever(note),
             ),
           ],
+          if (_isDesktop) ...[
+            const SizedBox(width: 4),
+            AppPressable(
+              onTap: () => windowManager.minimize(),
+              tooltip: 'Minimize',
+              child: const Padding(
+                padding: EdgeInsets.all(7),
+                child: Icon(LucideIcons.minus, size: 15),
+              ),
+            ),
+            AppPressable(
+              onTap: () async {
+                if (await windowManager.isMaximized()) {
+                  await windowManager.unmaximize();
+                } else {
+                  await windowManager.maximize();
+                }
+              },
+              tooltip: 'Maximize',
+              child: const Padding(
+                padding: EdgeInsets.all(7),
+                child: Icon(LucideIcons.square, size: 13),
+              ),
+            ),
+            AppPressable(
+              onTap: () => windowManager.close(),
+              tooltip: 'Close',
+              child: const Padding(
+                padding: EdgeInsets.all(7),
+                child: Icon(LucideIcons.x, size: 15),
+              ),
+            ),
+          ],
         ],
       ),
     );
+    if (!_isDesktop) return bar;
+    return DragToMoveArea(child: bar);
   }
+
+  static bool get _isDesktop =>
+      !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
   Widget _trashBanner(BuildContext context, Note note) {
     final t = context.tokens;
     return Container(
