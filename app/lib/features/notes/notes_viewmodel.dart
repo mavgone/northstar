@@ -46,6 +46,14 @@ class NotesViewModel extends ChangeNotifier {
   void reselect(String oldId, String newId) {
     if (selectedId == oldId) {
       selectedId = newId;
+      final synced = _synced;
+      if (synced != null) {
+        final fresh = synced.byId(newId);
+        if (fresh != null) {
+          _all.removeWhere((n) => n.id == oldId || n.id == newId);
+          _all.insert(0, fresh);
+        }
+      }
       notifyListeners();
     }
   }
@@ -264,9 +272,9 @@ class NotesViewModel extends ChangeNotifier {
       status: status,
       updatedAt: DateTime.now(),
     );
-    await _repo.saveNote(next);
-    final i = _all.indexWhere((n) => n.id == note.id);
-    if (i != -1) _all[i] = next;
+    final saved = await _repo.saveNote(next);
+    _all.removeWhere((n) => n.id == note.id || n.id == saved.id);
+    _all.insert(0, saved);
     notifyListeners();
   }
 

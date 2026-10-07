@@ -2,6 +2,7 @@ package dev.northstar.notes.shared.exception;
 import io.jsonwebtoken.JwtException;
 import java.time.Instant;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
+@Slf4j
 public class ApiExceptionHandler {
   public record Problem(String type, String title, int status, String detail, String instance, Instant timestamp) {}
   private ResponseEntity<Problem> problem(HttpStatus status, String title, String detail) {
@@ -51,6 +53,7 @@ public class ApiExceptionHandler {
   }
   @ExceptionHandler(Exception.class)
   public ResponseEntity<Problem> unexpected(Exception ex) {
+    log.error("Unexpected error", ex);
     return problem(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error", "An unexpected error occurred.");
   }
 }

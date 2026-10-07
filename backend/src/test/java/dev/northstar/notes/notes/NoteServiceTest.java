@@ -1,8 +1,11 @@
 package dev.northstar.notes.notes;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import dev.northstar.notes.notes.dto.CreateNoteRequest;
 import dev.northstar.notes.notes.dto.UpdateNoteRequest;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +33,7 @@ class NoteServiceTest {
   void shouldKeepActive() {
     UUID owner = UUID.randomUUID();
     UUID id = UUID.randomUUID();
-    when(notes.findByIdAndOwnerId(id, owner)).thenReturn(Optional.of(active(owner, id)));
+    when(notes.findById(id)).thenReturn(Optional.of(active(owner, id)));
     when(notes.save(any(NoteEntity.class))).thenAnswer(inv -> inv.getArgument(0));
     var dto = service.update(owner, id, new UpdateNoteRequest(null, "hello again", null, null, null, null));
     assertThat(dto.status()).isEqualTo("active");
@@ -43,9 +46,51 @@ class NoteServiceTest {
     UUID id = UUID.randomUUID();
     var entity = active(owner, id);
     entity.setStatus(NoteStatus.trashed);
-    when(notes.findByIdAndOwnerId(id, owner)).thenReturn(Optional.of(entity));
+    when(notes.findById(id)).thenReturn(Optional.of(entity));
     when(notes.save(any(NoteEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
     var dto = service.update(owner, id, new UpdateNoteRequest("Hello", null, null, null, null, null));
+
     assertThat(dto.status()).isEqualTo("trashed");
+  }
+
+  @Test
+  @DisplayName("update on missing id creates with client id (upsert)")
+  void shouldUpsertCreate() {
+    UUID owner = UUID.randomUUID();
+    UUID id = UUID.randomUUID();
+    when(notes.findById(id)).thenReturn(Optional.empty());
+    when(notes.save(any(NoteEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    var dto = service.update(owner, id, new UpdateNoteRequest("Hi", "body", null, null, null, null));
+
+    assertThat(dto.id()).isEqualTo(id);
+    assertThat(dto.title()).isEqualTo("Hi");
+  }
+
+  @Test
+  @DisplayName("update on foreign id is denied")
+  void shouldDenyForeignId() {
+    UUID owner = UUID.randomUUID();
+    UUID id = UUID.randomUUID();
+    var foreign = active(UUID.randomUUID(), id);
+    when(notes.findById(id)).thenReturn(Optional.of(foreign));
+
+    assertThatThrownBy(() -> service.update(owner, id, new UpdateNoteRequest("Hi", null, null, null, null, null)))
+        .isInstanceOf(dev.northstar.notes.shared.exception.NotFoundException.class);
+  }
+
+  @Test
+  @DisplayName("create applies full payload in one row")
+  void shouldCreateFull() {
+    UUID owner = UUID.randomUUID();
+    when(notes.save(any(NoteEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    var dto = service.create(
+        owner, new CreateNoteRequest("Inbox", "T", "B", List.of("x"), true));
+
+    assertThat(dto.title()).isEqualTo("T");
+    assertThat(dto.body()).isEqualTo("B");
+    assertThat(dto.isFavorite()).isTrue();
   }
 }

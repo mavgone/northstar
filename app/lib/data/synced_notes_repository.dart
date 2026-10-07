@@ -39,6 +39,12 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
 
   bool get online => _remote != null && _monitor.online;
   int get pendingCount => _pending;
+  Note? byId(String id) {
+    for (final n in _mem) {
+      if (n.id == id) return n;
+    }
+    return null;
+  }
   int _sessionGen = 0;
   Future<void> openUser(String userId, {bool enableRemote = true}) async {
     await closeUser();
@@ -130,20 +136,24 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     isFavorite: n.isFavorite,
     status: n.status,
   );
-  Future<Note> _pushOne(HttpNotesRepository remote, Note note) async {
-    try {
-      if (note.id.startsWith('local_')) {
-        final created = await remote.createNote(folderId: note.folderId);
-        return await remote.saveNote(_withId(note, created.id));
-      }
-      return await remote.saveNote(note);
-    } on ApiException catch (e) {
-      if (e.status == 404) {
-        final created = await remote.createNote(folderId: note.folderId);
-        return await remote.saveNote(_withId(note, created.id));
-      }
-      rethrow;
+  Future<void> _bus = Future.value();
+  Future<T> _serialized<T>(Future<T> Function() op) {
+    final next = _bus.then((_) => op());
+    _bus = next.then((_) {}, onError: (_) {});
+    return next;
+  }
+  Future<Note> _pushOne(HttpNotesRepository remote, Note note) {
+    return _serialized(() => _pushOneInner(remote, note));
+  }
+  Future<Note> _pushOneInner(HttpNotesRepository remote, Note note) async {
+    var current = note;
+    if (current.id.startsWith('local_')) {
+      current = _withId(current, const Uuid().v4());
+      final i = _mem.indexWhere((n) => n.id == note.id);
+      if (i != -1) _mem[i] = current;
+      onRemap?.call(note.id, current.id);
     }
+    return remote.saveNote(current);
   }
 
   Future<void> _pushBestEffort(
@@ -298,7 +308,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
   Future<Note> createNote({required String folderId}) async {
     final now = DateTime.now();
     final note = Note(
-      id: 'local_${const Uuid().v4()}',
+      id: const Uuid().v4(),
       title: 'Untitled',
       body: '',
       folderId: folderId,

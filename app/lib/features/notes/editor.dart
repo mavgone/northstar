@@ -24,6 +24,7 @@ class _EditorPaneState extends State<EditorPane> {
   final _body = TextEditingController();
   final _tag = TextEditingController();
   late final _bodyFocus = FocusNode(onKeyEvent: _bodyTabKey);
+  late final _titleFocus = FocusNode();
   Timer? _save;
   String? _boundId;
   bool _saving = false;
@@ -54,24 +55,28 @@ class _EditorPaneState extends State<EditorPane> {
     _body.dispose();
     _tag.dispose();
     _bodyFocus.dispose();
+    _titleFocus.dispose();
     super.dispose();
   }
 
   void _bind(Note? n) {
     if (n?.id == _boundId) {
       final pending = _save;
-      if (pending == null || !pending.isActive) {
-        if (_title.text != (n?.title ?? '')) _title.text = n?.title ?? '';
-        if (_body.text != (n?.body ?? '')) {
-          final sel = _body.selection;
-          _body.text = n?.body ?? '';
-          if (sel.isValid) {
-            _body.selection = TextSelection(
-              baseOffset: sel.start.clamp(0, _body.text.length),
-              extentOffset: sel.end.clamp(0, _body.text.length),
-            );
-          }
+      final idle = pending == null || !pending.isActive;
+      if (idle && !_titleFocus.hasFocus && _title.text != (n?.title ?? '')) {
+        _title.text = n?.title ?? '';
+      }
+      if (idle && !_bodyFocus.hasFocus && _body.text != (n?.body ?? '')) {
+        final sel = _body.selection;
+        _body.text = n?.body ?? '';
+        if (sel.isValid) {
+          _body.selection = TextSelection(
+            baseOffset: sel.start.clamp(0, _body.text.length),
+            extentOffset: sel.end.clamp(0, _body.text.length),
+          );
         }
+      }
+      if (idle) {
         _savedTitle = _title.text;
         _savedBody = _body.text;
         _savedTags = List<String>.from(n?.tags ?? const []);
@@ -566,6 +571,7 @@ class _EditorPaneState extends State<EditorPane> {
                       children: [
                         _TitleBlock(
                           title: _title,
+                          focusNode: _titleFocus,
                           fontSize: titleSize * widget.zoom,
                           enabled: !trashed,
                           onChanged: () => _queueSave(note),
@@ -929,11 +935,14 @@ class _EditorPaneState extends State<EditorPane> {
 class _TitleBlock extends StatelessWidget {
   const _TitleBlock({
     required this.title,
+    required this.focusNode,
     required this.fontSize,
     required this.enabled,
     required this.onChanged,
   });
+
   final TextEditingController title;
+  final FocusNode focusNode;
   final double fontSize;
   final bool enabled;
   final VoidCallback onChanged;
@@ -973,6 +982,7 @@ class _TitleBlock extends StatelessWidget {
               ),
               child: TextField(
                 controller: title,
+                focusNode: focusNode,
                 enabled: enabled,
                 maxLines: null,
                 style: context.displayGlow.copyWith(
