@@ -1,0 +1,19 @@
+# Production on your server. All secrets from env, nothing hardcoded.
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    show-sql: false
+jwt:
+  secret: ${JWT_SECRET}
+  cookie-secure: true
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+logging:
+  level:
+    dev.northstar: INFO

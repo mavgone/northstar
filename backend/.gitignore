@@ -1,0 +1,13 @@
+target/
+.idea/
+*.iml
+.env
+.DS_Store
+
+# IDE
+.classpath
+.project
+.settings/
+.factorypath
+
+bin/

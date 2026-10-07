@@ -1,0 +1,47 @@
+name: note_app
+description: Northstar Notes desktop app with Spring Boot backend.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.11.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  http: ^1.2.0
+  shadcn_ui: ^0.57.1
+  flutter_animate: ^4.5.2
+  lucide_icons_flutter: ^3.1.22
+  flutter_svg: ^2.3.0
+  responsive_framework: ^1.5.1
+  skeletonizer: ^3.0.0
+  window_manager: ^0.5.2
+  shared_preferences: ^2.5.6
+  flutter_markdown: ^0.7.7+1
+  path_provider: ^2.1.6
+  uuid: ^4.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/lain/lain.png
+    - assets/logo/light/mark-dark.png
+    - assets/logo/light/lockup-light.png
+    - assets/logo/primary/mark-light.png
+    - assets/logo/primary/lockup-dark.png
+    - assets/logo/terminal/mark-phosphor.png
+    - assets/logo/terminal/lockup-terminal.png
+  fonts:
+    - family: PressStart2P
+      fonts:
+        - asset: assets/fonts/PressStart2P-Regular.ttf
+    - family: GohuFont
+      fonts:
+        - asset: assets/fonts/GohuFont-Powerline.ttf

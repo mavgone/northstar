@@ -1,0 +1,10 @@
+# Local dev: Postgres via docker-compose. Override with env if needed.
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/northstar}
+    username: ${SPRING_DATASOURCE_USERNAME:app}
+    password: ${SPRING_DATASOURCE_PASSWORD:app}
+logging:
+  level:
+    dev.northstar: DEBUG
+    org.hibernate.SQL: WARN
