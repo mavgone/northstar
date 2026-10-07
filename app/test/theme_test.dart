@@ -21,9 +21,21 @@ void main() {
 
   test('measured contrast per theme', () {
     for (final t in [AppTokens.light, AppTokens.dark, AppTokens.lain]) {
-      expect(ratio(t.text, t.bg), greaterThanOrEqualTo(4.5), reason: '${t.id} text/bg');
-      expect(ratio(t.textMuted, t.bg), greaterThanOrEqualTo(3.0), reason: '${t.id} muted/bg');
-      expect(ratio(t.accent, t.bg), greaterThanOrEqualTo(3.0), reason: '${t.id} accent/bg');
+      expect(
+        ratio(t.text, t.bg),
+        greaterThanOrEqualTo(4.5),
+        reason: '${t.id} text/bg',
+      );
+      expect(
+        ratio(t.textMuted, t.bg),
+        greaterThanOrEqualTo(3.0),
+        reason: '${t.id} muted/bg',
+      );
+      expect(
+        ratio(t.accent, t.bg),
+        greaterThanOrEqualTo(3.0),
+        reason: '${t.id} accent/bg',
+      );
     }
   });
 

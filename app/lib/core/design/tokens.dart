@@ -163,35 +163,67 @@ class AppTokens extends ThemeExtension<AppTokens> {
   AppTokens copyWith() => this;
 
   @override
-  AppTokens lerp(ThemeExtension<AppTokens>? other, double t) => t < 0.5 ? this : (other as AppTokens?) ?? this;
+  AppTokens lerp(ThemeExtension<AppTokens>? other, double t) =>
+      t < 0.5 ? this : (other as AppTokens?) ?? this;
 }
 
 extension TokensX on BuildContext {
-  AppTokens get tokens => Theme.of(this).extension<AppTokens>() ?? AppTokens.light;
+  AppTokens get tokens =>
+      Theme.of(this).extension<AppTokens>() ?? AppTokens.light;
 }
 
 /// Theme-aware heading styles. In lain they pick up the pixel face plus glow.
 extension ThemeTextX on BuildContext {
   TextStyle get displayGlow => AppType.display.copyWith(
-        color: tokens.text,
-        fontFamily: tokens.headingFontFamily,
-        fontFamilyFallback: tokens.headingFontFallback,
-        shadows: tokens.headingGlow,
-      );
+    color: tokens.text,
+    fontFamily: tokens.headingFontFamily,
+    fontFamilyFallback: tokens.headingFontFallback,
+    shadows: tokens.headingGlow,
+  );
   TextStyle get headlineGlow => AppType.headline.copyWith(
-        color: tokens.text,
-        fontFamily: tokens.headingFontFamily,
-        fontFamilyFallback: tokens.headingFontFallback,
-        shadows: tokens.headingGlow,
-      );
+    color: tokens.text,
+    fontFamily: tokens.headingFontFamily,
+    fontFamilyFallback: tokens.headingFontFallback,
+    shadows: tokens.headingGlow,
+  );
 }
 
 abstract class AppType {
-  static const TextStyle display = TextStyle(fontSize: 28, fontWeight: FontWeight.w600, letterSpacing: -0.5, height: 1.2);
-  static const TextStyle title = TextStyle(fontSize: 20, fontWeight: FontWeight.w600, letterSpacing: -0.2, height: 1.3);
-  static const TextStyle headline = TextStyle(fontSize: 15, fontWeight: FontWeight.w600, height: 1.35);
-  static const TextStyle body = TextStyle(fontSize: 13.5, fontWeight: FontWeight.w400, height: 1.55);
-  static const TextStyle small = TextStyle(fontSize: 12.5, fontWeight: FontWeight.w400, height: 1.45);
-  static const TextStyle caption = TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500, height: 1.4);
-  static const TextStyle mono = TextStyle(fontSize: 12, fontFamily: 'monospace', height: 1.5);
+  static const TextStyle display = TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.5,
+    height: 1.2,
+  );
+  static const TextStyle title = TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    letterSpacing: -0.2,
+    height: 1.3,
+  );
+  static const TextStyle headline = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    height: 1.35,
+  );
+  static const TextStyle body = TextStyle(
+    fontSize: 13.5,
+    fontWeight: FontWeight.w400,
+    height: 1.55,
+  );
+  static const TextStyle small = TextStyle(
+    fontSize: 12.5,
+    fontWeight: FontWeight.w400,
+    height: 1.45,
+  );
+  static const TextStyle caption = TextStyle(
+    fontSize: 11.5,
+    fontWeight: FontWeight.w500,
+    height: 1.4,
+  );
+  static const TextStyle mono = TextStyle(
+    fontSize: 12,
+    fontFamily: 'monospace',
+    height: 1.5,
+  );
 }

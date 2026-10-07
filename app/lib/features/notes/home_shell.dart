@@ -9,6 +9,7 @@ import 'note_list.dart';
 import 'notes_viewmodel.dart';
 import 'palette.dart';
 import 'sidebar.dart';
+
 class HomeShell extends StatefulWidget {
   const HomeShell({
     super.key,
@@ -30,6 +31,7 @@ class HomeShell extends StatefulWidget {
   @override
   State<HomeShell> createState() => _HomeShellState();
 }
+
 class _HomeShellState extends State<HomeShell> {
   final _searchCtrl = TextEditingController();
   final _searchFocus = FocusNode();
@@ -40,28 +42,43 @@ class _HomeShellState extends State<HomeShell> {
     super.initState();
     widget.notes.load();
   }
+
   @override
   void dispose() {
     _searchCtrl.dispose();
     _searchFocus.dispose();
     super.dispose();
   }
-  void _palette() => CommandPalette.show(context, widget.notes, () => widget.notes.create(), widget.onWelcome);
+
+  void _palette() => CommandPalette.show(
+    context,
+    widget.notes,
+    () => widget.notes.create(),
+    widget.onWelcome,
+  );
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
     return CallbackShortcuts(
       bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyN, control: true): () => widget.notes.create(),
-        const SingleActivator(LogicalKeyboardKey.keyF, control: true): () => _searchFocus.requestFocus(),
+        const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
+            widget.notes.create(),
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
+            _searchFocus.requestFocus(),
         const SingleActivator(LogicalKeyboardKey.keyK, control: true): _palette,
-        const SingleActivator(LogicalKeyboardKey.keyB, control: true): widget.notes.toggleSidebar,
-        const SingleActivator(LogicalKeyboardKey.equal, control: true): () => widget.onZoom(widget.zoom + 0.1),
-        const SingleActivator(LogicalKeyboardKey.minus, control: true): () => widget.onZoom(widget.zoom - 0.1),
-        const SingleActivator(LogicalKeyboardKey.digit0, control: true): () => widget.onZoom(1.0),
+        const SingleActivator(LogicalKeyboardKey.keyB, control: true):
+            widget.notes.toggleSidebar,
+        const SingleActivator(LogicalKeyboardKey.equal, control: true): () =>
+            widget.onZoom(widget.zoom + 0.1),
+        const SingleActivator(LogicalKeyboardKey.minus, control: true): () =>
+            widget.onZoom(widget.zoom - 0.1),
+        const SingleActivator(LogicalKeyboardKey.digit0, control: true): () =>
+            widget.onZoom(1.0),
         const SingleActivator(LogicalKeyboardKey.delete): () {
           final s = widget.notes.selected;
-          if (s != null && s.status != NoteStatus.trashed) widget.notes.toTrash(s);
+          if (s != null && s.status != NoteStatus.trashed) {
+            widget.notes.toTrash(s);
+          }
         },
       },
       child: Focus(
@@ -95,7 +112,10 @@ class _HomeShellState extends State<HomeShell> {
                         onOpenPalette: _palette,
                       ),
                     ),
-                    if (showEditor) Expanded(child: EditorPane(vm: widget.notes, zoom: widget.zoom)),
+                    if (showEditor)
+                      Expanded(
+                        child: EditorPane(vm: widget.notes, zoom: widget.zoom),
+                      ),
                   ],
                 );
               },
@@ -105,22 +125,28 @@ class _HomeShellState extends State<HomeShell> {
       ),
     );
   }
+
   Widget _mobile(BuildContext context) {
     final t = context.tokens;
     final tabs = ['Folders', 'Notes', 'Editor'];
     Widget body = switch (_mobileTab) {
       0 => Sidebar(
-          notes: widget.notes,
-          auth: widget.auth,
-          themeId: widget.themeId,
-          onTheme: widget.onTheme,
-          collapsed: false,
-          width: double.infinity,
-          pendingDropFolder: _dropFolder,
-          onDropHighlight: (v) => setState(() => _dropFolder = v),
-        ),
+        notes: widget.notes,
+        auth: widget.auth,
+        themeId: widget.themeId,
+        onTheme: widget.onTheme,
+        collapsed: false,
+        width: double.infinity,
+        pendingDropFolder: _dropFolder,
+        onDropHighlight: (v) => setState(() => _dropFolder = v),
+      ),
       2 => EditorPane(vm: widget.notes, zoom: widget.zoom),
-      _ => NoteListPane(vm: widget.notes, searchCtrl: _searchCtrl, searchFocus: _searchFocus, onOpenPalette: _palette),
+      _ => NoteListPane(
+        vm: widget.notes,
+        searchCtrl: _searchCtrl,
+        searchFocus: _searchFocus,
+        onOpenPalette: _palette,
+      ),
     };
     return Scaffold(
       backgroundColor: t.bg,
@@ -128,9 +154,17 @@ class _HomeShellState extends State<HomeShell> {
         backgroundColor: t.panel,
         title: const Text('Northstar', style: AppType.headline),
         actions: [
-          IconButton(icon: Icon(LucideIcons.command, color: t.textMuted), onPressed: _palette, tooltip: 'Palette (Ctrl+K)'),
+          IconButton(
+            icon: Icon(LucideIcons.command, color: t.textMuted),
+            onPressed: _palette,
+            tooltip: 'Palette (Ctrl+K)',
+          ),
           ThemeMenu(themeId: widget.themeId, onTheme: widget.onTheme),
-          IconButton(icon: Icon(LucideIcons.plus, color: t.textMuted), onPressed: () => widget.notes.create(), tooltip: 'New'),
+          IconButton(
+            icon: Icon(LucideIcons.plus, color: t.textMuted),
+            onPressed: () => widget.notes.create(),
+            tooltip: 'New',
+          ),
         ],
       ),
       body: Column(
@@ -138,7 +172,10 @@ class _HomeShellState extends State<HomeShell> {
           Padding(
             padding: const EdgeInsets.all(10),
             child: SegmentedButton<int>(
-              segments: [for (var i = 0; i < tabs.length; i++) ButtonSegment(value: i, label: Text(tabs[i]))],
+              segments: [
+                for (var i = 0; i < tabs.length; i++)
+                  ButtonSegment(value: i, label: Text(tabs[i])),
+              ],
               selected: {_mobileTab},
               onSelectionChanged: (s) => setState(() => _mobileTab = s.first),
             ),

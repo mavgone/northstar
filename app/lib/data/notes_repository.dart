@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../domain/models.dart';
+
 abstract class NotesRepository {
   Future<List<Note>> loadNotes();
   Future<List<NoteFolder>> loadFolders();
@@ -7,6 +8,7 @@ abstract class NotesRepository {
   Future<void> deleteForever(String id);
   Future<Note> createNote({required String folderId});
 }
+
 class MockNotesRepository implements NotesRepository {
   MockNotesRepository();
   final List<NoteFolder> _folders = const [
@@ -22,11 +24,13 @@ class MockNotesRepository implements NotesRepository {
     await Future<void>.delayed(const Duration(milliseconds: 900));
     return List<Note>.unmodifiable(_notes);
   }
+
   @override
   Future<List<NoteFolder>> loadFolders() async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
     return List<NoteFolder>.unmodifiable(_folders);
   }
+
   @override
   Future<Note> saveNote(Note note) async {
     await Future<void>.delayed(const Duration(milliseconds: 120));
@@ -38,11 +42,13 @@ class MockNotesRepository implements NotesRepository {
     }
     return note;
   }
+
   @override
   Future<void> deleteForever(String id) async {
     await Future<void>.delayed(const Duration(milliseconds: 150));
     _notes.removeWhere((n) => n.id == id);
   }
+
   @override
   Future<Note> createNote({required String folderId}) async {
     await Future<void>.delayed(const Duration(milliseconds: 120));
@@ -60,6 +66,7 @@ class MockNotesRepository implements NotesRepository {
     _notes.insert(0, note);
     return note;
   }
+
   List<Note> _seed() {
     final now = DateTime.now();
     Note n({
@@ -87,11 +94,13 @@ class MockNotesRepository implements NotesRepository {
         status: status,
       );
     }
+
     return [
       n(
         id: 'n1',
         title: 'Desktop layout principles',
-        body: 'Sidebar 264px, list 320px, editor fluid. Keep the editor at 760px so lines stay readable. '
+        body:
+            'Sidebar 264px, list 320px, editor fluid. Keep the editor at 760px so lines stay readable. '
             'Hover states under 150ms, panel transitions 180 to 220ms. No ripples. Press means sink plus scale.',
         folder: 'f_design',
         tags: ['design', 'desktop'],
@@ -102,7 +111,8 @@ class MockNotesRepository implements NotesRepository {
       n(
         id: 'n2',
         title: 'Q3 roadmap: notes app',
-        body: '1. Multi-pane editing\n2. Command palette (Ctrl+K)\n3. Trash restore\n'
+        body:
+            '1. Multi-pane editing\n2. Command palette (Ctrl+K)\n3. Trash restore\n'
             '4. Folder drag & drop\n5. Theme tokens + dark mode',
         folder: 'f_product',
         tags: ['roadmap'],
@@ -112,7 +122,8 @@ class MockNotesRepository implements NotesRepository {
       n(
         id: 'n3',
         title: 'Keyboard-first UX checklist',
-        body: 'Ctrl+N new note · Ctrl+F search · Ctrl+K palette · Ctrl+B sidebar · '
+        body:
+            'Ctrl+N new note · Ctrl+F search · Ctrl+K palette · Ctrl+B sidebar · '
             'Delete moves to trash · every action focusable with visible focus ring.',
         folder: 'f_engineering',
         tags: ['ux', 'a11y'],
@@ -123,7 +134,8 @@ class MockNotesRepository implements NotesRepository {
       n(
         id: 'n4',
         title: 'Design tokens v1',
-        body: 'Radius 10/14/18. Spacing 4pt base. Shadows soft, never hard. '
+        body:
+            'Radius 10/14/18. Spacing 4pt base. Shadows soft, never hard. '
             'Type: Inter-ish system stack, 12/13/15/20/28 scale.',
         folder: 'f_design',
         tags: ['tokens'],
@@ -133,7 +145,8 @@ class MockNotesRepository implements NotesRepository {
       n(
         id: 'n5',
         title: 'Meeting notes: sync',
-        body: 'Decided: frontend-only milestone first. Backend interfaces stay abstract; '
+        body:
+            'Decided: frontend-only milestone first. Backend interfaces stay abstract; '
             'mock repos behind contracts so API can plug in later.',
         folder: 'f_inbox',
         tags: ['meeting'],
@@ -143,7 +156,8 @@ class MockNotesRepository implements NotesRepository {
       n(
         id: 'n6',
         title: 'Empty states copy',
-        body: 'Nothing here yet. Press Ctrl+N for a new note. Trash is empty too. Deleted notes wait here for 30 days.',
+        body:
+            'Nothing here yet. Press Ctrl+N for a new note. Trash is empty too. Deleted notes wait here for 30 days.',
         folder: 'f_personal',
         tags: [],
         hoursAgo: 200,
@@ -152,7 +166,8 @@ class MockNotesRepository implements NotesRepository {
       n(
         id: 'n7',
         title: 'Launch announcement',
-        body: 'Short, calm, confident. Lead with what changed, not version numbers…',
+        body:
+            'Short, calm, confident. Lead with what changed, not version numbers…',
         folder: 'f_product',
         tags: ['announcement'],
         hoursAgo: 6,
@@ -172,7 +187,8 @@ class MockNotesRepository implements NotesRepository {
       n(
         id: 'n9',
         title: 'Linux window notes',
-        body: 'window_manager min size 980x640. Test GNOME + KDE scaling 100/150/200%. '
+        body:
+            'window_manager min size 980x640. Test GNOME + KDE scaling 100/150/200%. '
             'Hide native title bar, keep custom drag region.',
         folder: 'f_engineering',
         tags: ['linux', 'windows'],
@@ -182,7 +198,8 @@ class MockNotesRepository implements NotesRepository {
       n(
         id: 'n10',
         title: 'Raycast-style palette ideas',
-        body: 'Fuzzy search with grouped results: Notes, Folders, Actions. Footer hints: Up and Down to move, Enter to open, Esc to close.',
+        body:
+            'Fuzzy search with grouped results: Notes, Folders, Actions. Footer hints: Up and Down to move, Enter to open, Esc to close.',
         folder: 'f_product',
         tags: ['palette'],
         hoursAgo: 150,
@@ -200,7 +217,8 @@ class MockNotesRepository implements NotesRepository {
       n(
         id: 'n12',
         title: 'Performance notes',
-        body: 'const constructors, ListView.builder, minimal rebuilds via ListenableBuilder slices. '
+        body:
+            'const constructors, ListView.builder, minimal rebuilds via ListenableBuilder slices. '
             'No heavy work in build(). Debounce search 200ms.',
         folder: 'f_engineering',
         tags: ['perf'],

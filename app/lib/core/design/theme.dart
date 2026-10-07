@@ -9,28 +9,38 @@ class AppTheme {
   static const Color seed = Color(0xFF6E56CF);
 
   static ThemeData light() {
-    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light);
+    final scheme = ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: Brightness.light,
+    );
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: AppTokens.light.bg,
       extensions: const [AppTokens.light],
       inputDecorationTheme: _input(AppTokens.light),
-      tooltipTheme: const TooltipThemeData(waitDuration: Duration(milliseconds: 500)),
+      tooltipTheme: const TooltipThemeData(
+        waitDuration: Duration(milliseconds: 500),
+      ),
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
     );
   }
 
   static ThemeData dark() {
-    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.dark);
+    final scheme = ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: Brightness.dark,
+    );
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: AppTokens.dark.bg,
       extensions: const [AppTokens.dark],
       inputDecorationTheme: _input(AppTokens.dark),
-      tooltipTheme: const TooltipThemeData(waitDuration: Duration(milliseconds: 500)),
+      tooltipTheme: const TooltipThemeData(
+        waitDuration: Duration(milliseconds: 500),
+      ),
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
     );
@@ -38,16 +48,25 @@ class AppTheme {
 
   static ThemeData lain() {
     const t = AppTokens.lain;
-    final scheme = ColorScheme.fromSeed(seedColor: t.accent, brightness: Brightness.dark);
+    final scheme = ColorScheme.fromSeed(
+      seedColor: t.accent,
+      brightness: Brightness.dark,
+    );
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: t.bg,
       fontFamily: 'GohuFont',
-      fontFamilyFallback: const ['Courier New', 'DejaVu Sans Mono', 'monospace'],
+      fontFamilyFallback: const [
+        'Courier New',
+        'DejaVu Sans Mono',
+        'monospace',
+      ],
       extensions: const [AppTokens.lain],
       inputDecorationTheme: _input(t),
-      tooltipTheme: const TooltipThemeData(waitDuration: Duration(milliseconds: 500)),
+      tooltipTheme: const TooltipThemeData(
+        waitDuration: Duration(milliseconds: 500),
+      ),
       splashFactory: NoSplash.splashFactory,
       highlightColor: Colors.transparent,
     );

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 class ConnectionMonitor {
   ConnectionMonitor({required this.healthUrl});
   final String healthUrl;
@@ -15,11 +16,13 @@ class ConnectionMonitor {
     _timer = Timer.periodic(const Duration(seconds: 15), (_) => check());
     unawaited(check());
   }
+
   void stop() {
     _started = false;
     _timer?.cancel();
     _timer = null;
   }
+
   Future<bool> check() async {
     final client = HttpClient()..findProxy = (_) => 'DIRECT';
     try {
@@ -35,11 +38,13 @@ class ConnectionMonitor {
     }
     return _online;
   }
+
   void _set(bool value) {
     if (_online == value) return;
     _online = value;
     if (!_ctrl.isClosed) _ctrl.add(value);
   }
+
   void dispose() {
     stop();
     unawaited(_ctrl.close());

@@ -1,13 +1,19 @@
 import 'dart:async';
 import '../domain/models.dart';
+
 abstract class AuthRepository {
   Stream<AppUser?> get userChanges;
   AppUser? get currentUser;
   Future<AppUser> signIn({required String email, required String password});
-  Future<AppUser> signUp({required String name, required String email, required String password});
+  Future<AppUser> signUp({
+    required String name,
+    required String email,
+    required String password,
+  });
   Future<void> signOut();
   Future<AppUser> updateProfile({required String name});
 }
+
 class MockAuthRepository implements AuthRepository {
   MockAuthRepository();
   final _ctrl = StreamController<AppUser?>.broadcast();
@@ -20,9 +26,13 @@ class MockAuthRepository implements AuthRepository {
     await Future<void>.delayed(Duration(milliseconds: ms));
     return value;
   }
+
   void _fail(String message) => throw AuthException(message);
   @override
-  Future<AppUser> signIn({required String email, required String password}) async {
+  Future<AppUser> signIn({
+    required String email,
+    required String password,
+  }) async {
     await Future<void>.delayed(const Duration(milliseconds: 700));
     if (!email.contains('@')) _fail('Enter a valid email address.');
     if (password.length < 6) _fail('Password must be at least 6 characters.');
@@ -37,8 +47,13 @@ class MockAuthRepository implements AuthRepository {
     _ctrl.add(_user);
     return _user!;
   }
+
   @override
-  Future<AppUser> signUp({required String name, required String email, required String password}) async {
+  Future<AppUser> signUp({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
     await Future<void>.delayed(const Duration(milliseconds: 800));
     if (name.trim().length < 2) _fail('Please enter your name.');
     if (!email.contains('@')) _fail('Enter a valid email address.');
@@ -47,26 +62,41 @@ class MockAuthRepository implements AuthRepository {
     _ctrl.add(_user);
     return _user!;
   }
+
   @override
   Future<void> signOut() async {
     await _late<void>(null, 250);
     _user = null;
     _ctrl.add(null);
   }
+
   @override
   Future<AppUser> updateProfile({required String name}) async {
     await Future<void>.delayed(const Duration(milliseconds: 500));
     if (name.trim().length < 2) _fail('Name is too short.');
-    _user = AppUser(id: _user?.id ?? 'u_mock', name: name.trim(), email: _user?.email ?? 'you@demo.dev');
+    _user = AppUser(
+      id: _user?.id ?? 'u_mock',
+      name: name.trim(),
+      email: _user?.email ?? 'you@demo.dev',
+    );
     _ctrl.add(_user);
     return _user!;
   }
+
   String _prettyName(String email) {
-    final handle = email.split('@').first.replaceAll(RegExp(r'[._-]+'), ' ').trim();
+    final handle = email
+        .split('@')
+        .first
+        .replaceAll(RegExp(r'[._-]+'), ' ')
+        .trim();
     if (handle.isEmpty) return 'Demo User';
-    return handle.split(' ').map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}').join(' ');
+    return handle
+        .split(' ')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
   }
 }
+
 class AuthException implements Exception {
   AuthException(this.message, {this.statusCode});
   final String message;

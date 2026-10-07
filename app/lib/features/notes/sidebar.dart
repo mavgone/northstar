@@ -6,7 +6,9 @@ import '../../domain/models.dart';
 import '../auth/auth_viewmodel.dart';
 import '../auth/auth_screens.dart';
 import 'notes_viewmodel.dart';
+
 const _lainArt = 'assets/lain/lain.png';
+
 class Sidebar extends StatelessWidget {
   const Sidebar({
     super.key,
@@ -33,12 +35,23 @@ class Sidebar extends StatelessWidget {
     if (collapsed) {
       return Container(
         width: 60,
-        decoration: BoxDecoration(color: t.panel, border: Border(right: BorderSide(color: t.border))),
+        decoration: BoxDecoration(
+          color: t.panel,
+          border: Border(right: BorderSide(color: t.border)),
+        ),
         child: Column(
           children: [
             const SizedBox(height: 10),
-            _RailBtn(icon: LucideIcons.menu, tip: 'Expand (Ctrl+B)', onTap: notes.toggleSidebar),
-            _RailBtn(icon: LucideIcons.plus, tip: 'New note (Ctrl+N)', onTap: () => notes.create()),
+            _RailBtn(
+              icon: LucideIcons.menu,
+              tip: 'Expand (Ctrl+B)',
+              onTap: notes.toggleSidebar,
+            ),
+            _RailBtn(
+              icon: LucideIcons.plus,
+              tip: 'New note (Ctrl+N)',
+              onTap: () => notes.create(),
+            ),
             const Spacer(),
             ThemeMenu(themeId: themeId, onTheme: onTheme, compact: true),
           ],
@@ -47,7 +60,10 @@ class Sidebar extends StatelessWidget {
     }
     return Container(
       width: width,
-      decoration: BoxDecoration(color: t.panel, border: Border(right: BorderSide(color: t.border))),
+      decoration: BoxDecoration(
+        color: t.panel,
+        border: Border(right: BorderSide(color: t.border)),
+      ),
       child: ListenableBuilder(
         listenable: Listenable.merge([notes, auth]),
         builder: (context, _) => Column(
@@ -58,25 +74,60 @@ class Sidebar extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Text('Workspace', style: AppType.caption.copyWith(color: t.textFaint, letterSpacing: 0.6)),
+                    child: Text(
+                      'Workspace',
+                      style: AppType.caption.copyWith(
+                        color: t.textFaint,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
                   ),
                   AppPressable(
                     onTap: notes.toggleSidebar,
                     tooltip: 'Collapse sidebar (Ctrl+B)',
                     child: Padding(
                       padding: const EdgeInsets.all(6),
-                      child: Icon(LucideIcons.panelLeftClose, size: 15, color: t.textMuted),
+                      child: Icon(
+                        LucideIcons.panelLeftClose,
+                        size: 15,
+                        color: t.textMuted,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-            _viewTile(context, LucideIcons.notebookPen, 'All notes', NotesView.all, notes.totalActive),
-            _viewTile(context, LucideIcons.star, 'Favorites', NotesView.favorites, notes.favCount),
-            _viewTile(context, LucideIcons.trash2, 'Trash', NotesView.trash, notes.trashCount, dropToTrash: true),
+            _viewTile(
+              context,
+              LucideIcons.notebookPen,
+              'All notes',
+              NotesView.all,
+              notes.totalActive,
+            ),
+            _viewTile(
+              context,
+              LucideIcons.star,
+              'Favorites',
+              NotesView.favorites,
+              notes.favCount,
+            ),
+            _viewTile(
+              context,
+              LucideIcons.trash2,
+              'Trash',
+              NotesView.trash,
+              notes.trashCount,
+              dropToTrash: true,
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-              child: Text('Folders', style: AppType.caption.copyWith(color: t.textFaint, letterSpacing: 0.6)),
+              child: Text(
+                'Folders',
+                style: AppType.caption.copyWith(
+                  color: t.textFaint,
+                  letterSpacing: 0.6,
+                ),
+              ),
             ),
             Expanded(
               child: ListView.builder(
@@ -87,9 +138,11 @@ class Sidebar extends StatelessWidget {
                   return _FolderTile(
                     folder: f,
                     count: notes.countIn(f.id),
-                    active: notes.view == NotesView.all && notes.folderId == f.id,
+                    active:
+                        notes.view == NotesView.all && notes.folderId == f.id,
                     isDropTarget: pendingDropFolder == f.id,
-                    onTap: () => notes.setFolder(notes.folderId == f.id ? null : f.id),
+                    onTap: () =>
+                        notes.setFolder(notes.folderId == f.id ? null : f.id),
                     onDrop: (note) => notes.moveTo(note, f.id),
                     onHighlight: onDropHighlight,
                   );
@@ -103,11 +156,14 @@ class Sidebar extends StatelessWidget {
       ),
     );
   }
+
   Widget _tagsBlock(BuildContext context) {
     final t = context.tokens;
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),
-      decoration: BoxDecoration(border: Border(top: BorderSide(color: t.border))),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: t.border)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -115,15 +171,29 @@ class Sidebar extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Tags', style: AppType.caption.copyWith(color: t.textFaint, letterSpacing: 0.6)),
+                child: Text(
+                  'Tags',
+                  style: AppType.caption.copyWith(
+                    color: t.textFaint,
+                    letterSpacing: 0.6,
+                  ),
+                ),
               ),
               if (notes.tagFilter != null)
                 AppPressable(
                   onTap: () => notes.setTag(null),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    child: Text('Clear',
-                        style: AppType.caption.copyWith(color: t.accent, fontWeight: FontWeight.w600)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    child: Text(
+                      'Clear',
+                      style: AppType.caption.copyWith(
+                        color: t.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -138,7 +208,8 @@ class Sidebar extends StatelessWidget {
                   tag: tag,
                   count: notes.countForTag(tag),
                   selected: notes.tagFilter == tag,
-                  onTap: () => notes.setTag(notes.tagFilter == tag ? null : tag),
+                  onTap: () =>
+                      notes.setTag(notes.tagFilter == tag ? null : tag),
                 ),
             ],
           ),
@@ -146,11 +217,14 @@ class Sidebar extends StatelessWidget {
       ),
     );
   }
+
   Widget _footer(BuildContext context) {
     final t = context.tokens;
     return Container(
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(border: Border(top: BorderSide(color: t.border))),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: t.border)),
+      ),
       child: Row(
         children: [
           if (t.isLain)
@@ -163,17 +237,23 @@ class Sidebar extends StatelessWidget {
                   width: 30,
                   height: 30,
                   fit: BoxFit.cover,
-                  errorBuilder: (c, e, s) => Icon(LucideIcons.terminal, size: 20, color: t.accent),
+                  errorBuilder: (c, e, s) =>
+                      Icon(LucideIcons.terminal, size: 20, color: t.accent),
                 ),
               ),
             ),
           GestureDetector(
-            onTap: () => showDialog(context: context, builder: (_) => ProfileDialog(vm: auth, notesVm: notes)),
+            onTap: () => showDialog(
+              context: context,
+              builder: (_) => ProfileDialog(vm: auth, notesVm: notes),
+            ),
             child: CircleAvatar(
               radius: 15,
               backgroundColor: t.accentSoft,
               child: Text(
-                (auth.user?.name.isNotEmpty ?? false) ? auth.user!.name[0].toUpperCase() : '?',
+                (auth.user?.name.isNotEmpty ?? false)
+                    ? auth.user!.name[0].toUpperCase()
+                    : '?',
                 style: TextStyle(color: t.accent, fontWeight: FontWeight.w700),
               ),
             ),
@@ -183,17 +263,28 @@ class Sidebar extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(auth.user?.name ?? '-',
-                    style: AppType.small.copyWith(fontWeight: FontWeight.w600, color: t.text),
-                    overflow: TextOverflow.ellipsis),
-                Text(auth.user?.email ?? '',
-                    style: AppType.caption.copyWith(color: t.textFaint), overflow: TextOverflow.ellipsis),
+                Text(
+                  auth.user?.name ?? '-',
+                  style: AppType.small.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: t.text,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  auth.user?.email ?? '',
+                  style: AppType.caption.copyWith(color: t.textFaint),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
           ThemeMenu(themeId: themeId, onTheme: onTheme),
           AppPressable(
-            onTap: () => showDialog(context: context, builder: (_) => ProfileDialog(vm: auth, notesVm: notes)),
+            onTap: () => showDialog(
+              context: context,
+              builder: (_) => ProfileDialog(vm: auth, notesVm: notes),
+            ),
             tooltip: 'Profile and settings',
             child: Padding(
               padding: const EdgeInsets.all(7),
@@ -204,9 +295,18 @@ class Sidebar extends StatelessWidget {
       ),
     );
   }
-  Widget _viewTile(BuildContext context, IconData icon, String label, NotesView v, int count, {bool dropToTrash = false}) {
+
+  Widget _viewTile(
+    BuildContext context,
+    IconData icon,
+    String label,
+    NotesView v,
+    int count, {
+    bool dropToTrash = false,
+  }) {
     final t = context.tokens;
-    final active = notes.view == v && (v != NotesView.all || notes.folderId == null);
+    final active =
+        notes.view == v && (v != NotesView.all || notes.folderId == null);
     final shown = count;
     Widget tile(bool hot) {
       return Padding(
@@ -219,20 +319,32 @@ class Sidebar extends StatelessWidget {
             curve: AppMotion.ease,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
-              color: hot ? t.selected : (active ? t.selected : Colors.transparent),
+              color: hot
+                  ? t.selected
+                  : (active ? t.selected : Colors.transparent),
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: hot ? Border.all(color: t.accent, width: 1.3) : Border.all(color: Colors.transparent),
+              border: hot
+                  ? Border.all(color: t.accent, width: 1.3)
+                  : Border.all(color: Colors.transparent),
             ),
             child: Row(
               children: [
-                Icon(icon, size: 15, color: hot || active ? t.accent : t.textMuted),
+                Icon(
+                  icon,
+                  size: 15,
+                  color: hot || active ? t.accent : t.textMuted,
+                ),
                 const SizedBox(width: 9),
                 Expanded(
-                  child: Text(label,
-                      style: AppType.small.copyWith(
-                        color: hot || active ? t.text : t.textMuted,
-                        fontWeight: hot || active ? FontWeight.w600 : FontWeight.w500,
-                      )),
+                  child: Text(
+                    label,
+                    style: AppType.small.copyWith(
+                      color: hot || active ? t.text : t.textMuted,
+                      fontWeight: hot || active
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                    ),
+                  ),
                 ),
                 _CountPill(text: '$shown'),
               ],
@@ -241,6 +353,7 @@ class Sidebar extends StatelessWidget {
         ),
       );
     }
+
     if (!dropToTrash) return tile(false);
     return DragTarget<Note>(
       onWillAcceptWithDetails: (_) => true,
@@ -249,6 +362,7 @@ class Sidebar extends StatelessWidget {
     );
   }
 }
+
 class _CountPill extends StatelessWidget {
   const _CountPill({required this.text});
   final String text;
@@ -259,14 +373,27 @@ class _CountPill extends StatelessWidget {
       constraints: const BoxConstraints(minWidth: 24),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(color: t.panel2, borderRadius: BorderRadius.circular(AppRadius.pill)),
-        child: Text(text, textAlign: TextAlign.center, style: AppType.caption.copyWith(color: t.textMuted)),
+        decoration: BoxDecoration(
+          color: t.panel2,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+        ),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: AppType.caption.copyWith(color: t.textMuted),
+        ),
       ),
     );
   }
 }
+
 class _TagButton extends StatelessWidget {
-  const _TagButton({required this.tag, required this.count, required this.selected, required this.onTap});
+  const _TagButton({
+    required this.tag,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
   final String tag;
   final int count;
   final bool selected;
@@ -287,9 +414,14 @@ class _TagButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('#$tag',
-                style: TextStyle(
-                    fontSize: 11.5, color: selected ? t.accent : t.textMuted, fontWeight: FontWeight.w600)),
+            Text(
+              '#$tag',
+              style: TextStyle(
+                fontSize: 11.5,
+                color: selected ? t.accent : t.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(width: 5),
             Text('$count', style: AppType.caption.copyWith(color: t.textFaint)),
           ],
@@ -298,28 +430,36 @@ class _TagButton extends StatelessWidget {
     );
   }
 }
+
 class ThemeMenu extends StatelessWidget {
-  const ThemeMenu({super.key, required this.themeId, required this.onTheme, this.compact = false});
+  const ThemeMenu({
+    super.key,
+    required this.themeId,
+    required this.onTheme,
+    this.compact = false,
+  });
   final AppThemeId themeId;
   final ValueChanged<AppThemeId> onTheme;
   final bool compact;
   IconData get _currentIcon => switch (themeId) {
-        AppThemeId.light => LucideIcons.sun,
-        AppThemeId.dark => LucideIcons.moon,
-        AppThemeId.lain => LucideIcons.terminal,
-      };
+    AppThemeId.light => LucideIcons.sun,
+    AppThemeId.dark => LucideIcons.moon,
+    AppThemeId.lain => LucideIcons.terminal,
+  };
   String get _currentTip => switch (themeId) {
-        AppThemeId.light => 'Theme: Light',
-        AppThemeId.dark => 'Theme: Dark',
-        AppThemeId.lain => 'Theme: Lain',
-      };
+    AppThemeId.light => 'Theme: Light',
+    AppThemeId.dark => 'Theme: Dark',
+    AppThemeId.lain => 'Theme: Lain',
+  };
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
     return PopupMenuButton<AppThemeId>(
       tooltip: 'Switch theme',
       color: t.panel,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
       onSelected: onTheme,
       itemBuilder: (c) => [
         _item(t, AppThemeId.light, LucideIcons.sun, 'Light', 'Clean paper'),
@@ -332,7 +472,10 @@ class ThemeMenu extends StatelessWidget {
               child: AppPressable(
                 onTap: null,
                 tooltip: _currentTip,
-                child: Padding(padding: const EdgeInsets.all(10), child: Icon(_currentIcon, size: 17)),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Icon(_currentIcon, size: 17),
+                ),
               ),
             )
           : AppPressable(
@@ -345,7 +488,14 @@ class ThemeMenu extends StatelessWidget {
             ),
     );
   }
-  PopupMenuItem<AppThemeId> _item(AppTokens t, AppThemeId id, IconData icon, String title, String hint) {
+
+  PopupMenuItem<AppThemeId> _item(
+    AppTokens t,
+    AppThemeId id,
+    IconData icon,
+    String title,
+    String hint,
+  ) {
     final active = themeId == id;
     return PopupMenuItem(
       value: id,
@@ -353,7 +503,15 @@ class ThemeMenu extends StatelessWidget {
         children: [
           Icon(icon, size: 15, color: active ? t.accent : t.textMuted),
           const SizedBox(width: 10),
-          Expanded(child: Text(title, style: AppType.small.copyWith(fontWeight: FontWeight.w600, color: t.text))),
+          Expanded(
+            child: Text(
+              title,
+              style: AppType.small.copyWith(
+                fontWeight: FontWeight.w600,
+                color: t.text,
+              ),
+            ),
+          ),
           Text(hint, style: AppType.caption.copyWith(color: t.textFaint)),
           if (active) ...[
             const SizedBox(width: 8),
@@ -364,6 +522,7 @@ class ThemeMenu extends StatelessWidget {
     );
   }
 }
+
 class _RailBtn extends StatelessWidget {
   const _RailBtn({required this.icon, required this.tip, required this.onTap});
   final IconData icon;
@@ -376,11 +535,15 @@ class _RailBtn extends StatelessWidget {
       child: AppPressable(
         onTap: onTap,
         tooltip: tip,
-        child: Padding(padding: const EdgeInsets.all(10), child: Icon(icon, size: 17)),
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon, size: 17),
+        ),
       ),
     );
   }
 }
+
 class _FolderTile extends StatelessWidget {
   const _FolderTile({
     required this.folder,
@@ -420,22 +583,33 @@ class _FolderTile extends StatelessWidget {
             curve: AppMotion.ease,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
-              color: hot ? t.selected : (active ? t.selected : Colors.transparent),
+              color: hot
+                  ? t.selected
+                  : (active ? t.selected : Colors.transparent),
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: hot ? Border.all(color: t.accent, width: 1.3) : Border.all(color: Colors.transparent),
+              border: hot
+                  ? Border.all(color: t.accent, width: 1.3)
+                  : Border.all(color: Colors.transparent),
             ),
             child: Row(
               children: [
-                Icon(hot ? LucideIcons.folderOpen : LucideIcons.folder,
-                    size: 15, color: hot || active ? t.accent : t.textMuted),
+                Icon(
+                  hot ? LucideIcons.folderOpen : LucideIcons.folder,
+                  size: 15,
+                  color: hot || active ? t.accent : t.textMuted,
+                ),
                 const SizedBox(width: 9),
                 Expanded(
-                  child: Text(folder.name,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppType.small.copyWith(
-                        color: hot || active ? t.text : t.textMuted,
-                        fontWeight: hot || active ? FontWeight.w600 : FontWeight.w500,
-                      )),
+                  child: Text(
+                    folder.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppType.small.copyWith(
+                      color: hot || active ? t.text : t.textMuted,
+                      fontWeight: hot || active
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                    ),
+                  ),
                 ),
                 _CountPill(text: '$count'),
               ],

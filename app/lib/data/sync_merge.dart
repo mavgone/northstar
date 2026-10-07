@@ -1,4 +1,5 @@
 import '../domain/models.dart';
+
 List<Note> mergeNotes({
   required List<Note> local,
   required List<Note> remote,

@@ -9,6 +9,7 @@ import 'data/api_client.dart';
 import 'data/bootstrap_auth_repository.dart';
 import 'data/synced_notes_repository.dart';
 import 'data/token_storage.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
@@ -28,7 +29,10 @@ Future<void> main() async {
     } catch (_) {}
   }
   const useMock = bool.fromEnvironment('USE_MOCK', defaultValue: true);
-  const apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:8080/api/v1');
+  const apiBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://localhost:8080/api/v1',
+  );
   SharedPreferences? prefs;
   try {
     prefs = await SharedPreferences.getInstance();
@@ -39,8 +43,17 @@ Future<void> main() async {
     final tokens = TokenStore();
     final storage = TokenStorage(prefs: prefs);
     final healthUrl = apiBaseUrl.replaceFirst('/api/v1', '/actuator/health');
-    bootstrapAuth = BootstrapAuthRepository(baseUrl: apiBaseUrl, tokens: tokens, storage: storage, prefs: prefs);
-    syncedNotes = SyncedNotesRepository(tokens: tokens, baseUrl: apiBaseUrl, healthUrl: healthUrl);
+    bootstrapAuth = BootstrapAuthRepository(
+      baseUrl: apiBaseUrl,
+      tokens: tokens,
+      storage: storage,
+      prefs: prefs,
+    );
+    syncedNotes = SyncedNotesRepository(
+      tokens: tokens,
+      baseUrl: apiBaseUrl,
+      healthUrl: healthUrl,
+    );
     try {
       await bootstrapAuth.restoreSession();
     } catch (_) {}
@@ -49,15 +62,19 @@ Future<void> main() async {
   double initialZoom = 1.0;
   try {
     final saved = prefs?.getString('app.theme');
-    if (saved != null) initialTheme = AppThemeId.values.asNameMap()[saved] ?? AppThemeId.dark;
+    if (saved != null) {
+      initialTheme = AppThemeId.values.asNameMap()[saved] ?? AppThemeId.dark;
+    }
     final savedZoom = prefs?.getDouble('app.zoom');
     if (savedZoom != null) initialZoom = savedZoom.clamp(0.8, 1.5);
   } catch (_) {}
-  runApp(NoteApp(
-    authRepository: bootstrapAuth,
-    notesRepository: syncedNotes,
-    initialTheme: initialTheme,
-    initialZoom: initialZoom,
-    prefs: prefs,
-  ));
+  runApp(
+    NoteApp(
+      authRepository: bootstrapAuth,
+      notesRepository: syncedNotes,
+      initialTheme: initialTheme,
+      initialZoom: initialZoom,
+      prefs: prefs,
+    ),
+  );
 }

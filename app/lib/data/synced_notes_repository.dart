@@ -8,11 +8,15 @@ import 'http_notes_repository.dart';
 import 'local_store.dart';
 import 'notes_repository.dart';
 import 'sync_merge.dart';
+
 class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
-  SyncedNotesRepository({required TokenStore tokens, required String baseUrl, required String healthUrl})
-      : _tokens = tokens,
-        _api = ApiClient(baseUrl: baseUrl, tokens: tokens),
-        _monitor = ConnectionMonitor(healthUrl: healthUrl);
+  SyncedNotesRepository({
+    required TokenStore tokens,
+    required String baseUrl,
+    required String healthUrl,
+  }) : _tokens = tokens,
+       _api = ApiClient(baseUrl: baseUrl, tokens: tokens),
+       _monitor = ConnectionMonitor(healthUrl: healthUrl);
   final TokenStore _tokens;
   final ApiClient _api;
   final ConnectionMonitor _monitor;
@@ -32,6 +36,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     if (_disposed) return;
     super.notifyListeners();
   }
+
   bool get online => _remote != null && _monitor.online;
   int get pendingCount => _pending;
   int _sessionGen = 0;
@@ -58,6 +63,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     }
     notifyListeners();
   }
+
   Future<void> closeUser() async {
     _sessionGen++;
     await _monitorSub?.cancel();
@@ -71,11 +77,13 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     _syncing = false;
     _loadedOk = false;
   }
+
   Future<void> _persist() async {
     final store = _store;
     if (store == null || !_loadedOk) return;
     await store.save(_mem, _tombstones);
   }
+
   Future<void> fullSync() async {
     final remote = _remote;
     if (remote == null || _syncing) return;
@@ -110,17 +118,18 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
       notifyListeners();
     }
   }
+
   static Note _withId(Note n, String id) => Note(
-        id: id,
-        title: n.title,
-        body: n.body,
-        folderId: n.folderId,
-        tags: List<String>.from(n.tags),
-        createdAt: n.createdAt,
-        updatedAt: n.updatedAt,
-        isFavorite: n.isFavorite,
-        status: n.status,
-      );
+    id: id,
+    title: n.title,
+    body: n.body,
+    folderId: n.folderId,
+    tags: List<String>.from(n.tags),
+    createdAt: n.createdAt,
+    updatedAt: n.updatedAt,
+    isFavorite: n.isFavorite,
+    status: n.status,
+  );
   Future<Note> _pushOne(HttpNotesRepository remote, Note note) async {
     try {
       if (note.id.startsWith('local_')) {
@@ -136,7 +145,10 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
       rethrow;
     }
   }
-  Future<void> _pushBestEffort(Future<void> Function(HttpNotesRepository) op) async {
+
+  Future<void> _pushBestEffort(
+    Future<void> Function(HttpNotesRepository) op,
+  ) async {
     final remote = _remote;
     if (remote == null || !_monitor.online) {
       _pending++;
@@ -160,16 +172,19 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
       notifyListeners();
     }
   }
+
   @override
   Future<List<Note>> loadNotes() async {
     return List<Note>.unmodifiable(_mem);
   }
+
   @override
   Future<List<NoteFolder>> loadFolders() async {
     final names = _mem.map((n) => n.folderId).toSet().toList()..sort();
     if (!names.contains('Inbox')) names.insert(0, 'Inbox');
     return names.map((n) => NoteFolder(id: n, name: n)).toList();
   }
+
   @override
   Future<Note> saveNote(Note note) async {
     final i = _mem.indexWhere((n) => n.id == note.id);
@@ -197,6 +212,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     final j = _mem.indexWhere((n) => n.id == note.id);
     return j == -1 ? note : _mem[j];
   }
+
   @override
   Future<void> deleteForever(String id) async {
     _mem.removeWhere((n) => n.id == id);
@@ -215,6 +231,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
       notifyListeners();
     });
   }
+
   Future<int> guestNotesCount() async {
     try {
       final guest = await LocalNotesStore.open('guest');
@@ -224,6 +241,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
       return 0;
     }
   }
+
   Future<int> importGuestNotes() async {
     if (_store == null) return 0;
     final guest = await LocalNotesStore.open('guest');
@@ -231,9 +249,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     final existing = _mem.map((n) => '${n.title}\n${n.body}').toSet();
     var count = 0;
     final now = DateTime.now();
-    for (final g in snap.notes) {
-      if (!_importable(g)) continue;
-      if (existing.contains('${g.title}\n${g.body}')) continue;
+    for (final g in selectGuestImports(snap.notes, existing)) {
       _mem.insert(
         0,
         Note(
@@ -248,7 +264,6 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
           status: NoteStatus.active,
         ),
       );
-      existing.add('${g.title}\n${g.body}');
       count++;
     }
     await _persist();
@@ -257,12 +272,31 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     if (count > 0) unawaited(fullSync());
     return count;
   }
+
   static bool _importable(Note n) {
     final untitled = n.title.trim().isEmpty || n.title == 'Untitled';
     return !(untitled && n.body.trim().isEmpty);
   }
+
+  static List<Note> selectGuestImports(
+    List<Note> guest,
+    Set<String> existingKeys,
+  ) {
+    final seen = Set<String>.of(existingKeys);
+    final out = <Note>[];
+    for (final g in guest) {
+      if (!_importable(g)) continue;
+      final key = '${g.title}\n${g.body}';
+      if (seen.contains(key)) continue;
+      seen.add(key);
+      out.add(g);
+    }
+    return out;
+  }
+
   @override
-  Future<Note> createNote({required String folderId}) async {    final now = DateTime.now();
+  Future<Note> createNote({required String folderId}) async {
+    final now = DateTime.now();
     final note = Note(
       id: 'local_${const Uuid().v4()}',
       title: 'Untitled',
@@ -289,6 +323,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     final j = _mem.indexWhere((n) => n.id == note.id);
     return j == -1 ? note : _mem[j];
   }
+
   @override
   void dispose() {
     _disposed = true;

@@ -93,11 +93,17 @@ class _AppPressableState extends State<AppPressable> {
               },
             ),
           },
-          child: Semantics(button: true, label: widget.semanticLabel, child: content),
+          child: Semantics(
+            button: true,
+            label: widget.semanticLabel,
+            child: content,
+          ),
         ),
       ),
     );
-    if (widget.tooltip != null) return Tooltip(message: widget.tooltip!, child: content);
+    if (widget.tooltip != null) {
+      return Tooltip(message: widget.tooltip!, child: content);
+    }
     return content;
   }
 }
@@ -157,7 +163,13 @@ class AppButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: side == null ? null : Border.fromBorderSide(side),
         boxShadow: kind == AppButtonKind.primary
-            ? [BoxShadow(color: t.shadow, blurRadius: 12, offset: const Offset(0, 4))]
+            ? [
+                BoxShadow(
+                  color: t.shadow,
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
             : null,
       ),
       child: Row(
@@ -179,7 +191,11 @@ class AppButton extends StatelessWidget {
             child: Text(
               label,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: fg, fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: fg,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           if (shortcut != null) ...[
@@ -213,7 +229,14 @@ class _Kbd extends StatelessWidget {
         borderRadius: BorderRadius.circular(5),
         border: Border.all(color: t.isDark ? Colors.white24 : Colors.black26),
       ),
-      child: Text(label, style: TextStyle(fontSize: 10.5, color: t.textMuted, fontWeight: FontWeight.w600)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10.5,
+          color: t.textMuted,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -253,14 +276,21 @@ class AppTextField extends StatelessWidget {
       style: TextStyle(color: t.text, fontSize: 13.5),
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: prefix == null ? null : Icon(prefix, size: 15, color: t.textFaint),
+        prefixIcon: prefix == null
+            ? null
+            : Icon(prefix, size: 15, color: t.textFaint),
       ),
     );
   }
 }
 
 class TagChip extends StatelessWidget {
-  const TagChip({super.key, required this.tag, this.onRemove, this.selected = false});
+  const TagChip({
+    super.key,
+    required this.tag,
+    this.onRemove,
+    this.selected = false,
+  });
   final String tag;
   final VoidCallback? onRemove;
   final bool selected;
@@ -271,14 +301,23 @@ class TagChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: selected ? t.selected : (t.isDark ? const Color(0x14FFFFFF) : const Color(0xFFF0EEE9)),
+        color: selected
+            ? t.selected
+            : (t.isDark ? const Color(0x14FFFFFF) : const Color(0xFFF0EEE9)),
         borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: selected ? t.accent : t.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('#$tag', style: TextStyle(fontSize: 11.5, color: selected ? t.accent : t.textMuted, fontWeight: FontWeight.w600)),
+          Text(
+            '#$tag',
+            style: TextStyle(
+              fontSize: 11.5,
+              color: selected ? t.accent : t.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (onRemove != null) ...[
             const SizedBox(width: 4),
             GestureDetector(
@@ -293,7 +332,13 @@ class TagChip extends StatelessWidget {
 }
 
 class EmptyState extends StatelessWidget {
-  const EmptyState({super.key, required this.icon, required this.title, required this.hint, this.action});
+  const EmptyState({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.hint,
+    this.action,
+  });
   final IconData icon;
   final String title;
   final String hint;
@@ -311,14 +356,28 @@ class EmptyState extends StatelessWidget {
             Container(
               width: 52,
               height: 52,
-              decoration: BoxDecoration(color: t.panel2, borderRadius: BorderRadius.circular(AppRadius.xl)),
+              decoration: BoxDecoration(
+                color: t.panel2,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+              ),
               child: Icon(icon, size: 24, color: t.textFaint),
             ),
             const SizedBox(height: AppSpace.x4),
-            Text(title, style: context.headlineGlow, textAlign: TextAlign.center),
+            Text(
+              title,
+              style: context.headlineGlow,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: AppSpace.x2),
-            Text(hint, style: AppType.small.copyWith(color: t.textMuted), textAlign: TextAlign.center),
-            if (action != null) ...[const SizedBox(height: AppSpace.x4), action!],
+            Text(
+              hint,
+              style: AppType.small.copyWith(color: t.textMuted),
+              textAlign: TextAlign.center,
+            ),
+            if (action != null) ...[
+              const SizedBox(height: AppSpace.x4),
+              action!,
+            ],
           ],
         ),
       ),
@@ -343,15 +402,26 @@ class ErrorState extends StatelessWidget {
             Container(
               width: 52,
               height: 52,
-              decoration: BoxDecoration(color: t.dangerSoft, borderRadius: BorderRadius.circular(AppRadius.xl)),
+              decoration: BoxDecoration(
+                color: t.dangerSoft,
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+              ),
               child: Icon(LucideIcons.triangleAlert, size: 24, color: t.danger),
             ),
             const SizedBox(height: AppSpace.x4),
             Text('Something went wrong', style: context.headlineGlow),
             const SizedBox(height: AppSpace.x2),
-            Text(message, style: AppType.small.copyWith(color: t.textMuted), textAlign: TextAlign.center),
+            Text(
+              message,
+              style: AppType.small.copyWith(color: t.textMuted),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: AppSpace.x4),
-            AppButton(label: 'Retry', icon: LucideIcons.rotateCw, onPressed: onRetry),
+            AppButton(
+              label: 'Retry',
+              icon: LucideIcons.rotateCw,
+              onPressed: onRetry,
+            ),
           ],
         ),
       ),
@@ -380,7 +450,9 @@ class NoteListSkeleton extends StatelessWidget {
             children: [
               Text('Loading note title placeholder', style: AppType.headline),
               SizedBox(height: 6),
-              Text('Preview line one placeholder text for skeleton shimmer effect demo.'),
+              Text(
+                'Preview line one placeholder text for skeleton shimmer effect demo.',
+              ),
             ],
           ),
         ),

@@ -1,5 +1,7 @@
 enum NoteStatus { active, trashed }
+
 enum SortMode { modifiedDesc, modifiedAsc, titleAsc, createdDesc }
+
 class Note {
   const Note({
     required this.id,
@@ -42,24 +44,29 @@ class Note {
       status: status ?? this.status,
     );
   }
+
   String get preview {
     final flat = body.replaceAll(RegExp(r'\s+'), ' ').trim();
     if (flat.isEmpty) return 'No additional text';
     return flat.length > 110 ? '${flat.substring(0, 110)}…' : flat;
   }
+
   int get wordCount {
     final t = ('$title $body').trim();
     if (t.isEmpty) return 0;
     return t.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
   }
 }
+
 class NoteFolder {
   const NoteFolder({required this.id, required this.name, this.icon = 0});
   final String id;
   final String name;
   final int icon;
-  NoteFolder copyWith({String? name}) => NoteFolder(id: id, name: name ?? this.name);
+  NoteFolder copyWith({String? name}) =>
+      NoteFolder(id: id, name: name ?? this.name);
 }
+
 class AppUser {
   const AppUser({required this.id, required this.name, required this.email});
   final String id;

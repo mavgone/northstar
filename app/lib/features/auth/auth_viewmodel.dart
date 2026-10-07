@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import '../../data/auth_repository.dart';
 import '../../data/bootstrap_auth_repository.dart';
 import '../../domain/models.dart';
+
 enum AuthScreen { login, register }
+
 class AuthViewModel extends ChangeNotifier {
   AuthViewModel(this._repo);
   final AuthRepository _repo;
@@ -18,6 +20,7 @@ class AuthViewModel extends ChangeNotifier {
     info = null;
     notifyListeners();
   }
+
   Future<bool> signIn(String email, String password) async {
     busy = true;
     error = null;
@@ -36,12 +39,17 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
   Future<bool> signUp(String name, String email, String password) async {
     busy = true;
     error = null;
     notifyListeners();
     try {
-      user = await _repo.signUp(name: name, email: email.trim(), password: password);
+      user = await _repo.signUp(
+        name: name,
+        email: email.trim(),
+        password: password,
+      );
       return true;
     } on AuthException catch (e) {
       error = e.message;
@@ -54,12 +62,14 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
   Future<void> signOut() async {
     await _repo.signOut();
     user = null;
     screen = AuthScreen.login;
     notifyListeners();
   }
+
   Future<void> continueAsGuest() async {
     final repo = _repo;
     if (repo is! BootstrapAuthRepository) {
@@ -79,6 +89,7 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
   void syncFromRepository() {
     final current = _repo.currentUser;
     if (current != null && user?.id != current.id) {
@@ -86,6 +97,7 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
   Future<bool> rename(String name) async {
     busy = true;
     error = null;

@@ -13,8 +13,26 @@ import 'features/auth/auth_screens.dart';
 import 'features/auth/auth_viewmodel.dart';
 import 'features/notes/home_shell.dart';
 import 'features/notes/notes_viewmodel.dart' as nv;
+
+bool shouldSeedWelcome({
+  required bool done,
+  required bool force,
+  required bool hasNotes,
+  required bool hasWelcome,
+}) {
+  if (force) return true;
+  return !done && !hasWelcome && !hasNotes;
+}
+
 class NoteApp extends StatefulWidget {
-  const NoteApp({super.key, this.authRepository, this.notesRepository, this.initialTheme = AppThemeId.dark, this.initialZoom = 1.0, this.prefs});
+  const NoteApp({
+    super.key,
+    this.authRepository,
+    this.notesRepository,
+    this.initialTheme = AppThemeId.dark,
+    this.initialZoom = 1.0,
+    this.prefs,
+  });
   final AuthRepository? authRepository;
   final NotesRepository? notesRepository;
   final AppThemeId initialTheme;
@@ -23,12 +41,19 @@ class NoteApp extends StatefulWidget {
   @override
   State<NoteApp> createState() => _NoteAppState();
 }
+
 class _NoteAppState extends State<NoteApp> {
-  late final AuthRepository _authRepo = widget.authRepository ?? MockAuthRepository();
-  late final NotesRepository _notesRepo = widget.notesRepository ?? MockNotesRepository();
+  late final AuthRepository _authRepo =
+      widget.authRepository ?? MockAuthRepository();
+  late final NotesRepository _notesRepo =
+      widget.notesRepository ?? MockNotesRepository();
   late final AuthViewModel _auth = AuthViewModel(_authRepo);
   late final nv.NotesViewModel _notes = nv.NotesViewModel(_notesRepo);
-  late final nv.AppState _appState = nv.AppState(initial: widget.initialTheme, initialZoom: widget.initialZoom, prefs: widget.prefs);
+  late final nv.AppState _appState = nv.AppState(
+    initial: widget.initialTheme,
+    initialZoom: widget.initialZoom,
+    prefs: widget.prefs,
+  );
   StreamSubscription<AppUser?>? _userSub;
   int _sessionGen = 0;
   bool _seeding = false;
@@ -46,8 +71,8 @@ class _NoteAppState extends State<NoteApp> {
             .openUser(user.id, enableRemote: user.id != 'guest')
             .then((_) => _notes.load())
             .then((_) {
-          if (gen == _sessionGen && mounted) _seedWelcome(user.id);
-        });
+              if (gen == _sessionGen && mounted) _seedWelcome(user.id);
+            });
       }
       _userSub = _authRepo.userChanges.listen((u) async {
         final gen = ++_sessionGen;
@@ -63,6 +88,7 @@ class _NoteAppState extends State<NoteApp> {
       });
     }
   }
+
   Future<void> reseedWelcome() async {
     try {
       final user = _authRepo.currentUser;
@@ -70,6 +96,7 @@ class _NoteAppState extends State<NoteApp> {
       await _seedWelcome(user.id, force: true);
     } catch (_) {}
   }
+
   Future<void> _seedWelcome(String userId, {bool force = false}) async {
     if (_seeding) return;
     _seeding = true;
@@ -79,8 +106,15 @@ class _NoteAppState extends State<NoteApp> {
       try {
         done = widget.prefs?.getBool(key) ?? false;
       } catch (_) {}
-      final hasWelcome = _notes.allNotes.any((n) => n.title == 'Добро пожаловать');
-      if ((done || hasWelcome || _notes.allNotes.isNotEmpty) && !force) {
+      final hasWelcome = _notes.allNotes.any(
+        (n) => n.title == 'Добро пожаловать',
+      );
+      if (!shouldSeedWelcome(
+        done: done,
+        force: force,
+        hasNotes: _notes.allNotes.isNotEmpty,
+        hasWelcome: hasWelcome,
+      )) {
         try {
           await widget.prefs?.setBool(key, true);
         } catch (_) {}
@@ -98,7 +132,9 @@ class _NoteAppState extends State<NoteApp> {
       _seeding = false;
     }
   }
-  static const _welcomeBody = '''Это живое демо Northstar - всё ниже можно трогать.
+
+  static const _welcomeBody =
+      '''Это живое демо Northstar - всё ниже можно трогать.
 # Задачи
 [ ] Нажми на этот чекбокс в режиме просмотра (глаз вверху)
 [ ] Создай свою заметку через Ctrl+N
@@ -120,6 +156,7 @@ class _NoteAppState extends State<NoteApp> {
     _appState.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -134,7 +171,9 @@ class _NoteAppState extends State<NoteApp> {
         return ShadApp(
           title: 'Northstar Notes',
           debugShowCheckedModeBanner: false,
-          themeMode: themeId == AppThemeId.light ? ThemeMode.light : ThemeMode.dark,
+          themeMode: themeId == AppThemeId.light
+              ? ThemeMode.light
+              : ThemeMode.dark,
           theme: ShadThemeData(
             brightness: Brightness.light,
             colorScheme: const ShadSlateColorScheme.light(),

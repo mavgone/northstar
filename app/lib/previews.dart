@@ -18,11 +18,19 @@ Widget buttonsLight() {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppButton(label: 'Primary', icon: LucideIcons.plus, kind: AppButtonKind.primary),
+            AppButton(
+              label: 'Primary',
+              icon: LucideIcons.plus,
+              kind: AppButtonKind.primary,
+            ),
             SizedBox(height: 8),
             AppButton(label: 'Secondary', icon: LucideIcons.search),
             SizedBox(height: 8),
-            AppButton(label: 'Danger', icon: LucideIcons.trash2, kind: AppButtonKind.danger),
+            AppButton(
+              label: 'Danger',
+              icon: LucideIcons.trash2,
+              kind: AppButtonKind.danger,
+            ),
           ],
         ),
       ),
@@ -40,7 +48,11 @@ Widget buttonsDark() {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppButton(label: 'Primary', icon: LucideIcons.plus, kind: AppButtonKind.primary),
+            AppButton(
+              label: 'Primary',
+              icon: LucideIcons.plus,
+              kind: AppButtonKind.primary,
+            ),
             SizedBox(height: 8),
             AppButton(label: 'Secondary', icon: LucideIcons.search),
           ],
@@ -64,7 +76,12 @@ Widget statesPreview() {
               hint: 'Create your first note with Ctrl+N.',
             ),
           ),
-          Expanded(child: ErrorState(message: 'Mock error for preview.', onRetry: () {})),
+          Expanded(
+            child: ErrorState(
+              message: 'Mock error for preview.',
+              onRetry: () {},
+            ),
+          ),
         ],
       ),
     ),
@@ -83,12 +100,25 @@ Widget lainPreview() {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Builder(
-              builder: (context) => Text('present day, present time', style: context.headlineGlow.copyWith(fontSize: 20)),
+              builder: (context) => Text(
+                'present day, present time',
+                style: context.headlineGlow.copyWith(fontSize: 20),
+              ),
             ),
             const SizedBox(height: 8),
-            const AppButton(label: 'Connect', icon: LucideIcons.terminal, kind: AppButtonKind.primary),
+            const AppButton(
+              label: 'Connect',
+              icon: LucideIcons.terminal,
+              kind: AppButtonKind.primary,
+            ),
             const SizedBox(height: 8),
-            const Wrap(spacing: 6, children: [TagChip(tag: 'wired'), TagChip(tag: 'lain', selected: true)]),
+            const Wrap(
+              spacing: 6,
+              children: [
+                TagChip(tag: 'wired'),
+                TagChip(tag: 'lain', selected: true),
+              ],
+            ),
           ],
         ),
       ),
@@ -107,7 +137,13 @@ Widget chipsPreview() {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Wrap(spacing: 6, children: [TagChip(tag: 'design'), TagChip(tag: 'roadmap', selected: true)]),
+            Wrap(
+              spacing: 6,
+              children: [
+                TagChip(tag: 'design'),
+                TagChip(tag: 'roadmap', selected: true),
+              ],
+            ),
             SizedBox(height: 12),
             AppTextField(hint: 'Search notes…'),
           ],

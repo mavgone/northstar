@@ -2,11 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:note_app/data/notes_repository.dart';
 import 'package:note_app/domain/models.dart';
 import 'package:note_app/features/notes/notes_viewmodel.dart';
+
 Future<NotesViewModel> _readyVm() async {
   final vm = NotesViewModel(MockNotesRepository());
   await vm.load();
   return vm;
 }
+
 void main() {
   test('seed loads notes, folders and selects first', () async {
     final vm = await _readyVm();

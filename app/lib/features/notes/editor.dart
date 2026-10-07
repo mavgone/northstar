@@ -10,6 +10,7 @@ import '../../core/design/tokens.dart';
 import '../../core/widgets/primitives.dart';
 import '../../domain/models.dart';
 import 'notes_viewmodel.dart';
+
 class EditorPane extends StatefulWidget {
   const EditorPane({super.key, required this.vm, this.zoom = 1.0});
   final NotesViewModel vm;
@@ -17,6 +18,7 @@ class EditorPane extends StatefulWidget {
   @override
   State<EditorPane> createState() => _EditorPaneState();
 }
+
 class _EditorPaneState extends State<EditorPane> {
   final _title = TextEditingController();
   final _body = TextEditingController();
@@ -42,6 +44,7 @@ class _EditorPaneState extends State<EditorPane> {
       }
     });
   }
+
   @override
   void dispose() {
     _save?.cancel();
@@ -53,6 +56,7 @@ class _EditorPaneState extends State<EditorPane> {
     _bodyFocus.dispose();
     super.dispose();
   }
+
   void _bind(Note? n) {
     if (n?.id == _boundId) {
       final pending = _save;
@@ -87,6 +91,7 @@ class _EditorPaneState extends State<EditorPane> {
     _savedBody = n?.body ?? '';
     _savedTags = List<String>.from(n?.tags ?? const []);
   }
+
   void _flushPending() {
     final pending = _save;
     _save = null;
@@ -98,6 +103,7 @@ class _EditorPaneState extends State<EditorPane> {
     final body = _body.text;
     _saveChain = _saveChain.then((_) => _doSave(oldId, title, body));
   }
+
   bool _tagsEqual(List<String> a, List<String> b) {
     if (a.length != b.length) return false;
     for (var i = 0; i < a.length; i++) {
@@ -105,6 +111,7 @@ class _EditorPaneState extends State<EditorPane> {
     }
     return true;
   }
+
   Future<void> _saveChain = Future.value();
   void _queueSave(Note n) {
     _save?.cancel();
@@ -115,6 +122,7 @@ class _EditorPaneState extends State<EditorPane> {
       _saveChain = _saveChain.then((_) => _doSave(n.id, title, body));
     });
   }
+
   Future<void> _doSave(String id, String title, String body) async {
     try {
       Note? fresh;
@@ -144,6 +152,7 @@ class _EditorPaneState extends State<EditorPane> {
       if (mounted && _boundId == id) setState(() => _saving = false);
     }
   }
+
   void _onBodyChanged(Note note, String text) {
     _queueSave(note);
     final sel = _body.selection;
@@ -161,13 +170,17 @@ class _EditorPaneState extends State<EditorPane> {
       _refreshLinkOverlay();
     }
   }
+
   List<Note> _linkMatches(String query) {
     final q = query.trim().toLowerCase();
-    final all = widget.vm.allNotes.where((n) => n.status != NoteStatus.trashed).toList();
+    final all = widget.vm.allNotes
+        .where((n) => n.status != NoteStatus.trashed)
+        .toList();
     all.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
     if (q.isEmpty) return all.take(7).toList();
     return all.where((n) => n.title.toLowerCase().contains(q)).take(7).toList();
   }
+
   void _refreshLinkOverlay() {
     if (!mounted) return;
     _linkOverlay?.remove();
@@ -176,14 +189,17 @@ class _EditorPaneState extends State<EditorPane> {
     if (query == null) return;
     final pos = _caretGlobalOffset();
     if (pos == null) return;
-    _linkOverlay = OverlayEntry(builder: (_) => _LinkPopup(
-          matches: _linkMatches(_linkQuery ?? ''),
-          index: _linkIndex,
-          anchor: pos,
-          onPick: _acceptLink,
-        ));
+    _linkOverlay = OverlayEntry(
+      builder: (_) => _LinkPopup(
+        matches: _linkMatches(_linkQuery ?? ''),
+        index: _linkIndex,
+        anchor: pos,
+        onPick: _acceptLink,
+      ),
+    );
     Overlay.of(context).insert(_linkOverlay!);
   }
+
   Offset? _caretGlobalOffset() {
     final render = _bodyFocus.context?.findRenderObject();
     if (render is! RenderBox) return null;
@@ -191,13 +207,20 @@ class _EditorPaneState extends State<EditorPane> {
     if (!sel.isValid) return null;
     final style = AppType.body.copyWith(fontSize: 14.5 * widget.zoom);
     final tp = TextPainter(
-      text: TextSpan(text: _body.text.substring(0, sel.start.clamp(0, _body.text.length)), style: style),
+      text: TextSpan(
+        text: _body.text.substring(0, sel.start.clamp(0, _body.text.length)),
+        style: style,
+      ),
       textDirection: TextDirection.ltr,
     );
     tp.layout(maxWidth: render.size.width);
-    final caret = tp.getOffsetForCaret(TextPosition(offset: sel.start.clamp(0, _body.text.length)), Rect.zero);
+    final caret = tp.getOffsetForCaret(
+      TextPosition(offset: sel.start.clamp(0, _body.text.length)),
+      Rect.zero,
+    );
     return render.localToGlobal(Offset(caret.dx, caret.dy + 20));
   }
+
   void _acceptLink(Note target) {
     final value = _body.value;
     final sel = value.selection;
@@ -216,6 +239,7 @@ class _EditorPaneState extends State<EditorPane> {
     final note = widget.vm.selected;
     if (note != null) _queueSave(note);
   }
+
   void _acceptLiteral() {
     final value = _body.value;
     final sel = value.selection;
@@ -231,6 +255,7 @@ class _EditorPaneState extends State<EditorPane> {
     final note = widget.vm.selected;
     if (note != null) _queueSave(note);
   }
+
   Future<void> _openLink(Note from, String title) async {
     final query = title.trim();
     if (query.isEmpty) return;
@@ -243,12 +268,16 @@ class _EditorPaneState extends State<EditorPane> {
     }
     found ??= () {
       for (final n in widget.vm.allNotes) {
-        if (n.id != from.id && n.title.toLowerCase() == query.toLowerCase()) return n;
+        if (n.id != from.id && n.title.toLowerCase() == query.toLowerCase()) {
+          return n;
+        }
       }
       return null;
     }();
     if (found != null) {
-      if (found.status == NoteStatus.trashed) widget.vm.setView(NotesView.trash);
+      if (found.status == NoteStatus.trashed) {
+        widget.vm.setView(NotesView.trash);
+      }
       widget.vm.select(found.id);
       return;
     }
@@ -258,6 +287,7 @@ class _EditorPaneState extends State<EditorPane> {
       await widget.vm.patch(created, title: query);
     }
   }
+
   KeyEventResult _bodyTabKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     if (_linkQuery != null) {
@@ -296,6 +326,7 @@ class _EditorPaneState extends State<EditorPane> {
     }
     return KeyEventResult.ignored;
   }
+
   int _lineStart(String text, int offset) {
     var i = offset.clamp(0, text.length);
     while (i > 0 && text[i - 1] != '\n') {
@@ -303,6 +334,7 @@ class _EditorPaneState extends State<EditorPane> {
     }
     return i;
   }
+
   int _lineEnd(String text, int offset) {
     var i = offset.clamp(0, text.length);
     while (i < text.length && text[i] != '\n') {
@@ -310,6 +342,7 @@ class _EditorPaneState extends State<EditorPane> {
     }
     return i;
   }
+
   void _indentSelection(bool indent) {
     final value = _body.value;
     final sel = value.selection;
@@ -347,7 +380,9 @@ class _EditorPaneState extends State<EditorPane> {
         shiftEnd += 2;
       } else {
         var remove = 0;
-        while (remove < 2 && remove < lines[i].length && lines[i][remove] == ' ') {
+        while (remove < 2 &&
+            remove < lines[i].length &&
+            lines[i][remove] == ' ') {
           remove++;
         }
         lines[i] = lines[i].substring(remove);
@@ -366,6 +401,7 @@ class _EditorPaneState extends State<EditorPane> {
     final note = widget.vm.selected;
     if (note != null) _queueSave(note);
   }
+
   bool _continueList() {
     final value = _body.value;
     final sel = value.selection;
@@ -378,7 +414,10 @@ class _EditorPaneState extends State<EditorPane> {
     if (bare != null && !line.trimLeft().startsWith('-')) {
       if (bare.group(3)!.trim().isEmpty) {
         final next = text.replaceRange(start, end, '');
-        _body.value = value.copyWith(text: next, selection: TextSelection.collapsed(offset: start));
+        _body.value = value.copyWith(
+          text: next,
+          selection: TextSelection.collapsed(offset: start),
+        );
         final note = widget.vm.selected;
         if (note != null) _queueSave(note);
         return true;
@@ -391,7 +430,9 @@ class _EditorPaneState extends State<EditorPane> {
       final next = text.replaceRange(sel.start, sel.start, '\n$indent$marker');
       _body.value = value.copyWith(
         text: next,
-        selection: TextSelection.collapsed(offset: sel.start + 1 + indent.length + marker.length),
+        selection: TextSelection.collapsed(
+          offset: sel.start + 1 + indent.length + marker.length,
+        ),
       );
       final note = widget.vm.selected;
       if (note != null) _queueSave(note);
@@ -401,13 +442,18 @@ class _EditorPaneState extends State<EditorPane> {
     if (bullet != null) {
       if ((bullet.group(2) ?? '').trim().isEmpty) {
         final next = text.replaceRange(start, end, '');
-        _body.value = value.copyWith(text: next, selection: TextSelection.collapsed(offset: start));
+        _body.value = value.copyWith(
+          text: next,
+          selection: TextSelection.collapsed(offset: start),
+        );
       } else {
         final marker = bullet.group(1)!;
         final next = text.replaceRange(sel.start, sel.start, '\n$marker');
         _body.value = value.copyWith(
           text: next,
-          selection: TextSelection.collapsed(offset: sel.start + 1 + marker.length),
+          selection: TextSelection.collapsed(
+            offset: sel.start + 1 + marker.length,
+          ),
         );
       }
       final note = widget.vm.selected;
@@ -418,13 +464,19 @@ class _EditorPaneState extends State<EditorPane> {
     if (ordered != null) {
       if ((ordered.group(4) ?? '').trim().isEmpty) {
         final next = text.replaceRange(start, end, '');
-        _body.value = value.copyWith(text: next, selection: TextSelection.collapsed(offset: start));
+        _body.value = value.copyWith(
+          text: next,
+          selection: TextSelection.collapsed(offset: start),
+        );
       } else {
-        final marker = '${ordered.group(1)}${int.parse(ordered.group(2)!) + 1}${ordered.group(3)}';
+        final marker =
+            '${ordered.group(1)}${int.parse(ordered.group(2)!) + 1}${ordered.group(3)}';
         final next = text.replaceRange(sel.start, sel.start, '\n$marker');
         _body.value = value.copyWith(
           text: next,
-          selection: TextSelection.collapsed(offset: sel.start + 1 + marker.length),
+          selection: TextSelection.collapsed(
+            offset: sel.start + 1 + marker.length,
+          ),
         );
       }
       final note = widget.vm.selected;
@@ -433,8 +485,10 @@ class _EditorPaneState extends State<EditorPane> {
     }
     return false;
   }
+
   static final _taskLine = RegExp(
-      '^(\\s*[-+*]\\s+)\\[([ xX])\\]${String.fromCharCode(0x200B)}?(?=\\s|\$)');
+    '^(\\s*[-+*]\\s+)\\[([ xX])\\]${String.fromCharCode(0x200B)}?(?=\\s|\$)',
+  );
   static final _bareTask = RegExp(r'^(\s*)\[([ xX])\](?=\s|$)');
   static List<int> _taskLines(String src) {
     final out = <int>[];
@@ -444,6 +498,7 @@ class _EditorPaneState extends State<EditorPane> {
     }
     return out;
   }
+
   void _toggleTask(Note note, int ordinal) {
     final view = _normalizeTasks(_body.text);
     final lines = _body.text.split('\n');
@@ -457,6 +512,7 @@ class _EditorPaneState extends State<EditorPane> {
     _body.text = lines.join('\n');
     _queueSave(note);
   }
+
   MarkdownStyleSheet _previewSheet(AppTokens t, double zoom) {
     final base = MarkdownStyleSheet.fromTheme(Theme.of(context));
     return base.copyWith(
@@ -469,6 +525,7 @@ class _EditorPaneState extends State<EditorPane> {
       checkbox: AppType.body.copyWith(color: t.accent, fontSize: 14 * zoom),
     );
   }
+
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
@@ -480,7 +537,8 @@ class _EditorPaneState extends State<EditorPane> {
           return const EmptyState(
             icon: LucideIcons.mousePointerClick,
             title: 'Select a note',
-            hint: 'Choose a note from the list, or create a new one with Ctrl+N.',
+            hint:
+                'Choose a note from the list, or create a new one with Ctrl+N.',
           );
         }
         _bind(note);
@@ -496,10 +554,10 @@ class _EditorPaneState extends State<EditorPane> {
                   final maxW = pane.maxWidth > 2000
                       ? 1000.0
                       : pane.maxWidth > 1600
-                          ? 920.0
-                          : pane.maxWidth > 1100
-                              ? 800.0
-                              : 760.0;
+                      ? 920.0
+                      : pane.maxWidth > 1100
+                      ? 800.0
+                      : 760.0;
                   final titleSize = pane.maxWidth < 560 ? 20.0 : 26.0;
                   final column = ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: maxW),
@@ -512,49 +570,59 @@ class _EditorPaneState extends State<EditorPane> {
                           enabled: !trashed,
                           onChanged: () => _queueSave(note),
                         ),
-                      _MetaBar(note: note, folderName: widget.vm.folderName(note.folderId)),
-                      const SizedBox(height: 8),
-                      if (note.tags.isNotEmpty)
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [
-                            for (final tag in note.tags)
-                              TagChip(
-                                tag: tag,
-                                onRemove: trashed
-                                    ? null
-                                    : () => widget.vm.patch(
-                                        note, tags: List<String>.from(note.tags)..remove(tag)),
-                              ),
-                          ],
+                        _MetaBar(
+                          note: note,
+                          folderName: widget.vm.folderName(note.folderId),
                         ),
-                      const SizedBox(height: 10),
-                      if (_preview)
-                        _TaskPreview(
-                          text: _body.text,
-                          sheet: _previewSheet(t, widget.zoom),
-                          onToggle: (ordinal) => _toggleTask(note, ordinal),
-                          onOpenLink: (title) => _openLink(note, title),
-                        )
-                      else
-                        TextField(
-                          controller: _body,
-                          focusNode: _bodyFocus,
-                          enabled: !trashed,
-                        maxLines: null,
-                        style: AppType.body.copyWith(color: t.text, fontSize: 14.5 * widget.zoom),
-                        decoration: InputDecoration(
-                          hintText: 'Start writing… Markdown supported in spirit.',
-                          hintStyle: TextStyle(color: t.textFaint),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          filled: false,
-                        ),
-                        onChanged: (v) => _onBodyChanged(note, v),
-                      ),
-                    ],
+                        const SizedBox(height: 8),
+                        if (note.tags.isNotEmpty)
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              for (final tag in note.tags)
+                                TagChip(
+                                  tag: tag,
+                                  onRemove: trashed
+                                      ? null
+                                      : () => widget.vm.patch(
+                                          note,
+                                          tags: List<String>.from(note.tags)
+                                            ..remove(tag),
+                                        ),
+                                ),
+                            ],
+                          ),
+                        const SizedBox(height: 10),
+                        if (_preview)
+                          _TaskPreview(
+                            text: _body.text,
+                            sheet: _previewSheet(t, widget.zoom),
+                            onToggle: (ordinal) => _toggleTask(note, ordinal),
+                            onOpenLink: (title) => _openLink(note, title),
+                          )
+                        else
+                          TextField(
+                            controller: _body,
+                            focusNode: _bodyFocus,
+                            enabled: !trashed,
+                            maxLines: null,
+                            style: AppType.body.copyWith(
+                              color: t.text,
+                              fontSize: 14.5 * widget.zoom,
+                            ),
+                            decoration: InputDecoration(
+                              hintText:
+                                  'Start writing… Markdown supported in spirit.',
+                              hintStyle: TextStyle(color: t.textFaint),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              filled: false,
+                            ),
+                            onChanged: (v) => _onBodyChanged(note, v),
+                          ),
+                      ],
                     ),
                   );
                   return Center(child: column);
@@ -568,13 +636,16 @@ class _EditorPaneState extends State<EditorPane> {
       },
     );
   }
+
   Widget _backlinksBar(BuildContext context, Note note) {
     final t = context.tokens;
     final links = widget.vm.backlinksFor(note);
     if (links.isEmpty) return const SizedBox.shrink();
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      decoration: BoxDecoration(border: Border(top: BorderSide(color: t.border))),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: t.border)),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -596,7 +667,10 @@ class _EditorPaneState extends State<EditorPane> {
                       widget.vm.select(link.id);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: t.panel2,
                         borderRadius: BorderRadius.circular(AppRadius.pill),
@@ -617,20 +691,29 @@ class _EditorPaneState extends State<EditorPane> {
       ),
     );
   }
+
   Widget _toolbar(BuildContext context, Note note, bool trashed) {
     final t = context.tokens;
     final bar = Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      decoration: BoxDecoration(border: Border(bottom: BorderSide(color: t.border))),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: t.border)),
+      ),
       child: Row(
         children: [
           if (_saving)
             Row(
               children: [
                 const SizedBox(
-                    width: 13, height: 13, child: CircularProgressIndicator(strokeWidth: 2)),
+                  width: 13,
+                  height: 13,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
                 const SizedBox(width: 7),
-                Text('Saving…', style: AppType.caption.copyWith(color: t.textFaint)),
+                Text(
+                  'Saving…',
+                  style: AppType.caption.copyWith(color: t.textFaint),
+                ),
               ],
             )
           else
@@ -638,7 +721,10 @@ class _EditorPaneState extends State<EditorPane> {
               children: [
                 Icon(LucideIcons.check, size: 13, color: t.textFaint),
                 const SizedBox(width: 6),
-                Text('Saved ${timeAgo(note.updatedAt)}', style: AppType.caption.copyWith(color: t.textFaint)),
+                Text(
+                  'Saved ${timeAgo(note.updatedAt)}',
+                  style: AppType.caption.copyWith(color: t.textFaint),
+                ),
               ],
             ),
           const Spacer(),
@@ -647,8 +733,11 @@ class _EditorPaneState extends State<EditorPane> {
             tooltip: _preview ? 'Edit' : 'Preview',
             child: Padding(
               padding: const EdgeInsets.all(7),
-              child: Icon(_preview ? LucideIcons.pen : LucideIcons.eye,
-                  size: 15, color: _preview ? t.accent : t.textMuted),
+              child: Icon(
+                _preview ? LucideIcons.pen : LucideIcons.eye,
+                size: 15,
+                color: _preview ? t.accent : t.textMuted,
+              ),
             ),
           ),
           AppPressable(
@@ -656,8 +745,11 @@ class _EditorPaneState extends State<EditorPane> {
             tooltip: note.isFavorite ? 'Remove favorite' : 'Favorite',
             child: Padding(
               padding: const EdgeInsets.all(7),
-              child: Icon(note.isFavorite ? LucideIcons.star : LucideIcons.star,
-                  size: 15, color: note.isFavorite ? t.accent : t.textMuted),
+              child: Icon(
+                note.isFavorite ? LucideIcons.star : LucideIcons.star,
+                size: 15,
+                color: note.isFavorite ? t.accent : t.textMuted,
+              ),
             ),
           ),
           if (!trashed)
@@ -670,7 +762,11 @@ class _EditorPaneState extends State<EditorPane> {
               ),
             )
           else ...[
-            AppButton(label: 'Restore', icon: LucideIcons.archiveRestore, onPressed: () => widget.vm.restore(note)),
+            AppButton(
+              label: 'Restore',
+              icon: LucideIcons.archiveRestore,
+              onPressed: () => widget.vm.restore(note),
+            ),
             const SizedBox(width: 8),
             AppButton(
               label: 'Delete forever',
@@ -730,23 +826,37 @@ class _EditorPaneState extends State<EditorPane> {
         children: [
           Icon(LucideIcons.trash2, size: 14, color: t.textMuted),
           const SizedBox(width: 8),
-          const Expanded(child: Text('This note is in trash. Restore to edit it.', style: AppType.small)),
+          const Expanded(
+            child: Text(
+              'This note is in trash. Restore to edit it.',
+              style: AppType.small,
+            ),
+          ),
           AppPressable(
             onTap: () => widget.vm.restore(note),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Text('Restore', style: AppType.small.copyWith(color: t.accent, fontWeight: FontWeight.w700)),
+              child: Text(
+                'Restore',
+                style: AppType.small.copyWith(
+                  color: t.accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
+
   Widget _statusbar(BuildContext context, Note note) {
     final t = context.tokens;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(border: Border(top: BorderSide(color: t.border))),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: t.border)),
+      ),
       child: Row(
         children: [
           Expanded(
@@ -758,8 +868,15 @@ class _EditorPaneState extends State<EditorPane> {
                 style: AppType.small.copyWith(color: t.text),
                 decoration: InputDecoration(
                   hintText: 'Add tag + Enter',
-                  prefixIcon: Icon(LucideIcons.tag, size: 13, color: t.textFaint),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  prefixIcon: Icon(
+                    LucideIcons.tag,
+                    size: 13,
+                    color: t.textFaint,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                 ),
                 onSubmitted: (v) {
                   final tag = v.trim().replaceAll('#', '').toLowerCase();
@@ -791,20 +908,24 @@ class _EditorPaneState extends State<EditorPane> {
                   Text(
                     widget.vm.isOffline
                         ? (widget.vm.pendingCount > 0
-                            ? 'Offline · ${widget.vm.pendingCount} pending'
-                            : 'Offline')
+                              ? 'Offline · ${widget.vm.pendingCount} pending'
+                              : 'Offline')
                         : '${widget.vm.pendingCount} pending',
                     style: AppType.caption.copyWith(color: t.textFaint),
                   ),
                 ],
               ),
             ),
-          Text('${note.wordCount} words', style: AppType.caption.copyWith(color: t.textFaint)),
+          Text(
+            '${note.wordCount} words',
+            style: AppType.caption.copyWith(color: t.textFaint),
+          ),
         ],
       ),
     );
   }
 }
+
 class _TitleBlock extends StatelessWidget {
   const _TitleBlock({
     required this.title,
@@ -828,14 +949,19 @@ class _TitleBlock extends StatelessWidget {
             valueListenable: title,
             builder: (c, v, _) {
               if (v.text.isEmpty) {
-                return Text('Untitled',
-                    style: context.displayGlow.copyWith(
-                      fontSize: fontSize,
-                      color: t.textFaint,
-                      shadows: null,
-                    ));
+                return Text(
+                  'Untitled',
+                  style: context.displayGlow.copyWith(
+                    fontSize: fontSize,
+                    color: t.textFaint,
+                    shadows: null,
+                  ),
+                );
               }
-              return Text(v.text, style: context.displayGlow.copyWith(fontSize: fontSize));
+              return Text(
+                v.text,
+                style: context.displayGlow.copyWith(fontSize: fontSize),
+              );
             },
           ),
           Positioned.fill(
@@ -871,6 +997,7 @@ class _TitleBlock extends StatelessWidget {
     );
   }
 }
+
 class _MetaBar extends StatelessWidget {
   const _MetaBar({required this.note, required this.folderName});
   final Note note;
@@ -886,10 +1013,17 @@ class _MetaBar extends StatelessWidget {
           const SizedBox(width: 5),
           Text(label, style: AppType.caption.copyWith(color: t.textFaint)),
           const SizedBox(width: 4),
-          Text(value, style: AppType.caption.copyWith(color: t.textMuted, fontWeight: FontWeight.w600)),
+          Text(
+            value,
+            style: AppType.caption.copyWith(
+              color: t.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       );
     }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -909,30 +1043,37 @@ class _MetaBar extends StatelessWidget {
     );
   }
 }
+
 String _normalizeTasks(String src) {
-  return src.split('\n').map((line) {
-    var out = line;
-    final bare = RegExp(r'^(\s*)\[([ xX])\](?=\s|$)').firstMatch(out);
-    if (bare != null) {
-      final rest = out.substring(bare.end);
-      if (RegExp(r'^\s*-\s+').hasMatch(rest)) {
-        out = out.replaceFirst('[', '\\[').replaceFirst(']', '\\]');
-      } else {
-        out = '${bare.group(1)}- [${bare.group(2)}]$rest';
-      }
-    } else {
-      final dashed = RegExp(r'^(\s*[-+*]\s+)\[([ xX])\](?=\s|$)').firstMatch(out);
-      if (dashed != null) {
-        out = out.replaceFirst('[', '\\[').replaceFirst(']', '\\]');
-      }
-    }
-    out = out.replaceAll('[](', '[\u200B](');
-    if (RegExp(r'^(\s*[-+*]\s+)\[([ xX])\]\s*$').hasMatch(out)) {
-      out = '$out\u200B';
-    }
-    return out;
-  }).join('\n');
+  return src
+      .split('\n')
+      .map((line) {
+        var out = line;
+        final bare = RegExp(r'^(\s*)\[([ xX])\](?=\s|$)').firstMatch(out);
+        if (bare != null) {
+          final rest = out.substring(bare.end);
+          if (RegExp(r'^\s*-\s+').hasMatch(rest)) {
+            out = out.replaceFirst('[', '\\[').replaceFirst(']', '\\]');
+          } else {
+            out = '${bare.group(1)}- [${bare.group(2)}]$rest';
+          }
+        } else {
+          final dashed = RegExp(
+            r'^(\s*[-+*]\s+)\[([ xX])\](?=\s|$)',
+          ).firstMatch(out);
+          if (dashed != null) {
+            out = out.replaceFirst('[', '\\[').replaceFirst(']', '\\]');
+          }
+        }
+        out = out.replaceAll('[](', '[\u200B](');
+        if (RegExp(r'^(\s*[-+*]\s+)\[([ xX])\]\s*$').hasMatch(out)) {
+          out = '$out\u200B';
+        }
+        return out;
+      })
+      .join('\n');
 }
+
 String _expandBlanks(String src) {
   final lines = src.split('\n');
   var blanks = 0;
@@ -946,6 +1087,7 @@ String _expandBlanks(String src) {
   }
   return lines.join('\n');
 }
+
 String _linkify(String src) {
   return src.replaceAllMapped(
     RegExp(r'\[\[([^\]\n]+?)(?:\|([^\]\n]+?))?\]\]'),
@@ -957,7 +1099,14 @@ String _linkify(String src) {
     },
   );
 }
-class _TaskPreview extends StatelessWidget {  const _TaskPreview({required this.text, required this.sheet, required this.onToggle, required this.onOpenLink});
+
+class _TaskPreview extends StatelessWidget {
+  const _TaskPreview({
+    required this.text,
+    required this.sheet,
+    required this.onToggle,
+    required this.onOpenLink,
+  });
   final String text;
   final MarkdownStyleSheet sheet;
   final ValueChanged<int> onToggle;
@@ -989,8 +1138,14 @@ class _TaskPreview extends StatelessWidget {  const _TaskPreview({required this.
     );
   }
 }
+
 class _LinkPopup extends StatelessWidget {
-  const _LinkPopup({required this.matches, required this.index, required this.anchor, required this.onPick});
+  const _LinkPopup({
+    required this.matches,
+    required this.index,
+    required this.anchor,
+    required this.onPick,
+  });
   final List<Note> matches;
   final int index;
   final Offset anchor;
@@ -1012,13 +1167,24 @@ class _LinkPopup extends StatelessWidget {
               color: t.panel,
               borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(color: t.border),
-              boxShadow: [BoxShadow(color: t.shadow, blurRadius: 18, offset: const Offset(0, 8))],
+              boxShadow: [
+                BoxShadow(
+                  color: t.shadow,
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             child: matches.isEmpty
                 ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    child: Text('No matches — Enter creates it',
-                        style: AppType.small.copyWith(color: t.textFaint)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      'No matches — Enter creates it',
+                      style: AppType.small.copyWith(color: t.textFaint),
+                    ),
                   )
                 : Column(
                     mainAxisSize: MainAxisSize.min,
@@ -1037,8 +1203,13 @@ class _LinkPopup extends StatelessWidget {
     );
   }
 }
+
 class _LinkRow extends StatelessWidget {
-  const _LinkRow({required this.note, required this.active, required this.onTap});
+  const _LinkRow({
+    required this.note,
+    required this.active,
+    required this.onTap,
+  });
   final Note note;
   final bool active;
   final VoidCallback onTap;
@@ -1064,8 +1235,15 @@ class _LinkRow extends StatelessWidget {
     );
   }
 }
+
 class _TaskBox extends StatelessWidget {
-  const _TaskBox({required this.value, required this.onChanged, required this.color, required this.size, required this.boxHeight});
+  const _TaskBox({
+    required this.value,
+    required this.onChanged,
+    required this.color,
+    required this.size,
+    required this.boxHeight,
+  });
   final bool value;
   final VoidCallback onChanged;
   final Color? color;

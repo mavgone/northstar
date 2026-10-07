@@ -2,10 +2,11 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/models.dart';
 import 'auth_repository.dart';
+
 class LocalAuthRepository implements AuthRepository {
   LocalAuthRepository({required AppUser user, SharedPreferences? prefs})
-      : _user = user,
-        _prefs = prefs;
+    : _user = user,
+      _prefs = prefs;
   static const lastIdKey = 'auth.last_id';
   static const lastNameKey = 'auth.last_name';
   static const lastEmailKey = 'auth.last_email';
@@ -17,19 +18,31 @@ class LocalAuthRepository implements AuthRepository {
   @override
   AppUser? get currentUser => _user;
   @override
-  Future<AppUser> signIn({required String email, required String password}) async {
-    if (_user == null) throw AuthException('No local session. Sign in online first.');
+  Future<AppUser> signIn({
+    required String email,
+    required String password,
+  }) async {
+    if (_user == null) {
+      throw AuthException('No local session. Sign in online first.');
+    }
     return _user!;
   }
+
   @override
-  Future<AppUser> signUp({required String name, required String email, required String password}) async {
+  Future<AppUser> signUp({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
     throw AuthException('Sign up needs connection. Try again when online.');
   }
+
   @override
   Future<void> signOut() async {
     _user = null;
     _ctrl.add(null);
   }
+
   @override
   Future<AppUser> updateProfile({required String name}) async {
     final current = _user;
@@ -44,6 +57,7 @@ class LocalAuthRepository implements AuthRepository {
     _ctrl.add(_user);
     return _user!;
   }
+
   static Future<void> remember(AppUser user, SharedPreferences? prefs) async {
     try {
       await prefs?.setString(lastIdKey, user.id);
@@ -51,10 +65,12 @@ class LocalAuthRepository implements AuthRepository {
       await prefs?.setString(lastEmailKey, user.email);
     } catch (_) {}
   }
+
   static AppUser? recalled(SharedPreferences? prefs, String email) {
     try {
       final savedEmail = prefs?.getString(lastEmailKey);
-      if (savedEmail == null || savedEmail.toLowerCase() != email.trim().toLowerCase()) {
+      if (savedEmail == null ||
+          savedEmail.toLowerCase() != email.trim().toLowerCase()) {
         return null;
       }
       return AppUser(
