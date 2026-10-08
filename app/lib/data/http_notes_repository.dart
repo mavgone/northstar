@@ -30,12 +30,15 @@ class HttpNotesRepository implements NotesRepository {
     return List<Note>.unmodifiable(_cached!);
   }
 
+  static NoteFolder _toFolder(Map<String, dynamic> json) => NoteFolder(
+        id: json['id'].toString(),
+        name: (json['name'] ?? '').toString(),
+        parentId: json['parentId']?.toString(),
+      );
   @override
   Future<List<NoteFolder>> loadFolders() async {
-    final notes = _cached ?? await loadNotes();
-    final names = notes.map((n) => n.folderId).toSet().toList()..sort();
-    if (!names.contains('Inbox')) names.insert(0, 'Inbox');
-    return names.map((n) => NoteFolder(id: n, name: n)).toList();
+    final raw = await _api.get('/folders') as List;
+    return raw.map((e) => _toFolder(e as Map<String, dynamic>)).toList();
   }
 
   @override
@@ -43,7 +46,7 @@ class HttpNotesRepository implements NotesRepository {
     final body = await _api.patch('/notes/${note.id}', {
       'title': note.title,
       'body': note.body,
-      'folder': note.folderId,
+      'folderId': note.folderId,
       'tags': note.tags,
       'isFavorite': note.isFavorite,
       'status': note.status.name,
@@ -61,8 +64,37 @@ class HttpNotesRepository implements NotesRepository {
 
   @override
   Future<Note> createNote({required String folderId}) async {
-    final body = await _api.post('/notes', {'folder': folderId}, auth: true);
+    final body = await _api.post('/notes', {'folderId': folderId}, auth: true);
     _cached = null;
     return _toNote(body);
+  }
+
+  @override
+  Future<NoteFolder> createFolder({required String name, String? parentId}) async {
+    final body = await _api.post('/folders', {
+      'name': name,
+      ...?parentId == null ? null : {'parentId': parentId},
+    }, auth: true);
+    return _toFolder(body);
+  }
+
+  @override
+  Future<NoteFolder> renameFolder({required String id, required String name}) async {
+    final body = await _api.patch('/folders/$id', {'name': name});
+    return _toFolder(body);
+  }
+
+  @override
+  Future<void> moveFolder({required String id, String? parentId}) async {
+    if (parentId == null) {
+      await _api.patch('/folders/$id/move-to-root', {});
+    } else {
+      await _api.patch('/folders/$id', {'parentId': parentId});
+    }
+  }
+
+  @override
+  Future<void> deleteFolder(String id) async {
+    await _api.delete('/folders/$id');
   }
 }

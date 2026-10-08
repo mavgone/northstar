@@ -6,7 +6,7 @@ public record NoteDto(
     UUID id,
     String title,
     String body,
-    String folder,
+    UUID folderId,
     List<String> tags,
     Instant createdAt,
     Instant updatedAt,

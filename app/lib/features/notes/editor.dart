@@ -576,10 +576,7 @@ class _EditorPaneState extends State<EditorPane> {
                           enabled: !trashed,
                           onChanged: () => _queueSave(note),
                         ),
-                        _MetaBar(
-                          note: note,
-                          folderName: widget.vm.folderName(note.folderId),
-                        ),
+                        _MetaBar(note: note, vm: widget.vm),
                         const SizedBox(height: 8),
                         if (note.tags.isNotEmpty)
                           Wrap(
@@ -1009,9 +1006,9 @@ class _TitleBlock extends StatelessWidget {
 }
 
 class _MetaBar extends StatelessWidget {
-  const _MetaBar({required this.note, required this.folderName});
+  const _MetaBar({required this.note, required this.vm});
   final Note note;
-  final String folderName;
+  final NotesViewModel vm;
   @override
   Widget build(BuildContext context) {
     final t = context.tokens;
@@ -1034,6 +1031,35 @@ class _MetaBar extends StatelessWidget {
       );
     }
 
+    Future<void> moveTo(String folderId) async {
+      try {
+        await vm.patch(note, fId: folderId);
+      } catch (e) {
+        if (!context.mounted) return;
+        await showDialog<void>(
+          context: context,
+          builder: (c) {
+            final tt = context.tokens;
+            return AlertDialog(
+              backgroundColor: tt.panel,
+              content: Text(
+                e.toString().replaceFirst('Exception: ', ''),
+                style: AppType.small.copyWith(color: tt.danger),
+              ),
+              actions: [
+                AppButton(
+                  label: 'OK',
+                  icon: LucideIcons.check,
+                  onPressed: () => Navigator.pop(c),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    }
+
+    final folders = vm.folders;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -1044,13 +1070,79 @@ class _MetaBar extends StatelessWidget {
       child: Wrap(
         spacing: 18,
         runSpacing: 6,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           item(LucideIcons.calendarPlus, 'Created', fullDate(note.createdAt)),
           item(LucideIcons.clock, 'Modified', fullDate(note.updatedAt)),
-          item(LucideIcons.folder, 'Folder', folderName),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(LucideIcons.folder, size: 12, color: t.textFaint),
+              const SizedBox(width: 5),
+              Text('Folder', style: AppType.caption.copyWith(color: t.textFaint)),
+              const SizedBox(width: 4),
+              PopupMenuButton<String>(
+                tooltip: 'Move to folder',
+                color: t.panel,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                onSelected: moveTo,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      vm.folderName(note.folderId),
+                      style: AppType.caption.copyWith(
+                        color: t.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(LucideIcons.chevronDown, size: 12, color: t.textFaint),
+                  ],
+                ),
+                itemBuilder: (c) => [
+                  for (final f in folders)
+                    PopupMenuItem<String>(
+                      value: f.id,
+                      child: Row(
+                        children: [
+                          SizedBox(width: _folderDepth(folders, f) * 12.0),
+                          if (note.folderId == f.id)
+                            Icon(LucideIcons.check, size: 13, color: t.accent)
+                          else
+                            const SizedBox(width: 13),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              f.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppType.small.copyWith(color: t.text),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  static int _folderDepth(List<NoteFolder> folders, NoteFolder folder) {
+    final byId = {for (final f in folders) f.id: f};
+    var depth = 0;
+    var parentId = folder.parentId;
+    var guard = 0;
+    while (parentId != null && guard++ < 32) {
+      depth++;
+      parentId = byId[parentId]?.parentId;
+    }
+    return depth;
   }
 }
 

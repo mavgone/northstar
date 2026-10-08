@@ -40,7 +40,7 @@ class NoteControllerTest {
         UUID.randomUUID(),
         "Q3 roadmap",
         "body",
-        "Inbox",
+        UUID.randomUUID(),
         List.of("roadmap"),
         Instant.now(),
         Instant.now(),

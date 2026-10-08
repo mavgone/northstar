@@ -59,12 +59,13 @@ class Note {
 }
 
 class NoteFolder {
-  const NoteFolder({required this.id, required this.name, this.icon = 0});
+  const NoteFolder({required this.id, required this.name, this.parentId, this.icon = 0});
   final String id;
   final String name;
+  final String? parentId;
   final int icon;
-  NoteFolder copyWith({String? name}) =>
-      NoteFolder(id: id, name: name ?? this.name);
+  NoteFolder copyWith({String? name, String? parentId}) =>
+      NoteFolder(id: id, name: name ?? this.name, parentId: parentId ?? this.parentId);
 }
 
 class AppUser {

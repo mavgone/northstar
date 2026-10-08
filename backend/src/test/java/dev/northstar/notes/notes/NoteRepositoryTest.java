@@ -17,12 +17,14 @@ class NoteRepositoryTest {
     UUID owner = UUID.randomUUID();
     var note = new NoteEntity();
     note.setOwnerId(owner);
+    note.setFolderId(UUID.randomUUID());
     note.setTitle("Desktop layout principles");
     note.setBody("Sidebar 264px");
     note.getTags().add("design");
     notes.save(note);
     var other = new NoteEntity();
     other.setOwnerId(UUID.randomUUID());
+    other.setFolderId(UUID.randomUUID());
     notes.save(other);
     var mine = notes.findByOwnerIdOrderByUpdatedAtDesc(owner);
     assertThat(mine).hasSize(1);

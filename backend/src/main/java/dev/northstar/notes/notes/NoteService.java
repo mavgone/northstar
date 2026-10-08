@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NoteService {
   private final NoteRepository notes;
+  private final FolderRepository folders;
   @Transactional(readOnly = true)
   public List<NoteDto> list(UUID ownerId) {
     return notes.findByOwnerIdOrderByUpdatedAtDesc(ownerId).stream()
@@ -27,7 +28,7 @@ public class NoteService {
   public NoteDto create(UUID ownerId, CreateNoteRequest req) {
     var entity = new NoteEntity();
     entity.setOwnerId(ownerId);
-    entity.setFolder(req != null && req.folder() != null ? req.folder() : "Inbox");
+    entity.setFolderId(resolveFolderRef(ownerId, req != null ? req.folderId() : null));
     entity.setTitle(req != null && req.title() != null ? req.title() : "Untitled");
     entity.setBody(req != null && req.body() != null ? req.body() : "");
     if (req != null && req.tags() != null) {
@@ -53,11 +54,11 @@ public class NoteService {
     var entity = new NoteEntity();
     entity.setId(id);
     entity.setOwnerId(ownerId);
-    entity.setFolder("Inbox");
+    entity.setFolderId(resolveFolder(ownerId, null));
     entity.setTitle("Untitled");
     entity.setBody("");
     entity.setStatus(NoteStatus.active);
-    applyPatch(entity, req);
+    applyPatch(ownerId, entity, req);
     entity.setUpdatedAt(Instant.now());
     notes.save(entity);
     log.info("Note upsert-created: {} owner={}", id, ownerId);
@@ -74,21 +75,60 @@ public class NoteService {
         .findByIdAndOwnerId(id, ownerId)
         .orElseThrow(() -> new NotFoundException("Note not found: " + id));
   }
+  private UUID resolveFolder(UUID ownerId, UUID folderId) {
+    if (folderId == null) return inboxId(ownerId);
+    return requireFolder(ownerId, folderId).getId();
+  }
+  private UUID resolveFolderRef(UUID ownerId, String ref) {
+    if (ref == null || ref.isBlank() || ref.equals("Inbox")) return inboxId(ownerId);
+    final UUID id;
+    try {
+      id = UUID.fromString(ref);
+    } catch (IllegalArgumentException e) {
+      return matchFolderByName(ownerId, ref);
+    }
+    return requireFolder(ownerId, id).getId();
+  }
+  private UUID matchFolderByName(UUID ownerId, String name) {
+    return folders.findByOwnerIdOrderByNameAsc(ownerId).stream()
+        .filter(f -> f.getName().equalsIgnoreCase(name.trim()))
+        .map(FolderEntity::getId)
+        .findFirst()
+        .orElseThrow(() -> new NotFoundException("Folder not found: " + name));
+  }
+  private FolderEntity requireFolder(UUID ownerId, UUID folderId) {
+    return folders
+        .findByIdAndOwnerId(folderId, ownerId)
+        .orElseThrow(() -> new NotFoundException("Folder not found: " + folderId));
+  }
+  private UUID inboxId(UUID ownerId) {
+    return folders.findByOwnerIdOrderByNameAsc(ownerId).stream()
+        .filter(f -> f.getName().equals("Inbox") && f.getParent() == null)
+        .map(FolderEntity::getId)
+        .findFirst()
+        .orElseGet(() -> {
+          var inbox = new FolderEntity();
+          inbox.setOwnerId(ownerId);
+          inbox.setName("Inbox");
+          folders.save(inbox);
+          return inbox.getId();
+        });
+  }
   private NoteDto updateEntity(NoteEntity entity, UpdateNoteRequest req) {
-    applyPatch(entity, req);
+    applyPatch(entity.getOwnerId(), entity, req);
     entity.setUpdatedAt(Instant.now());
     notes.save(entity);
     return toDto(entity);
   }
-  private static void applyPatch(NoteEntity entity, UpdateNoteRequest req) {
+  private void applyPatch(UUID ownerId, NoteEntity entity, UpdateNoteRequest req) {
     if (req.title() != null) {
       entity.setTitle(req.title());
     }
     if (req.body() != null) {
       entity.setBody(req.body());
     }
-    if (req.folder() != null) {
-      entity.setFolder(req.folder());
+    if (req.folderId() != null) {
+      entity.setFolderId(resolveFolderRef(ownerId, req.folderId()));
     }
     if (req.tags() != null) {
       entity.setTags(cleanTags(req.tags()));
@@ -112,7 +152,7 @@ public class NoteService {
         entity.getId(),
         entity.getTitle(),
         entity.getBody(),
-        entity.getFolder(),
+        entity.getFolderId(),
         List.copyOf(entity.getTags()),
         entity.getCreatedAt(),
         entity.getUpdatedAt(),

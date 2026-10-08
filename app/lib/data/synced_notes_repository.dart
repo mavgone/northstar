@@ -24,6 +24,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
   HttpNotesRepository? _remote;
   List<Note> _mem = [];
   Set<String> _tombstones = {};
+  List<NoteFolder> _folders = [];
   bool _syncing = false;
   bool _loadedOk = false;
   int _pending = 0;
@@ -56,6 +57,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     if (gen != _sessionGen) return;
     _mem = List<Note>.of(snap.notes);
     _tombstones = Set<String>.of(snap.tombstones);
+    _folders = List<NoteFolder>.of(snap.folders);
     _loadedOk = true;
     if (enableRemote && _tokens.hasTokens) {
       _remote = HttpNotesRepository(client: _api);
@@ -79,6 +81,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     _remote = null;
     _mem = [];
     _tombstones = {};
+    _folders = [];
     _pending = 0;
     _syncing = false;
     _loadedOk = false;
@@ -87,7 +90,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
   Future<void> _persist() async {
     final store = _store;
     if (store == null || !_loadedOk) return;
-    await store.save(_mem, _tombstones);
+    await store.save(_mem, _tombstones, _folders);
   }
 
   Future<void> fullSync() async {
@@ -97,6 +100,9 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     try {
       final pulled = await remote.loadNotes();
       _mem = mergeNotes(local: _mem, remote: pulled, tombstones: _tombstones);
+      try {
+        _folders = await remote.loadFolders();
+      } catch (_) {}
       final deleted = <String>[];
       for (final id in _tombstones) {
         try {
@@ -190,9 +196,60 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
 
   @override
   Future<List<NoteFolder>> loadFolders() async {
-    final names = _mem.map((n) => n.folderId).toSet().toList()..sort();
-    if (!names.contains('Inbox')) names.insert(0, 'Inbox');
-    return names.map((n) => NoteFolder(id: n, name: n)).toList();
+    final remote = _remote;
+    if (remote != null && _monitor.online) {
+      try {
+        _folders = await remote.loadFolders();
+        await _persist();
+        notifyListeners();
+      } catch (_) {}
+    }
+    if (_folders.isEmpty) {
+      return const [NoteFolder(id: 'Inbox', name: 'Inbox')];
+    }
+    return List<NoteFolder>.unmodifiable(_folders);
+  }
+
+  HttpNotesRepository _onlineRemote() {
+    final remote = _remote;
+    if (remote == null || !_monitor.online) {
+      throw Exception('Folders need connection. Notes still work offline.');
+    }
+    return remote;
+  }
+
+  @override
+  Future<NoteFolder> createFolder({required String name, String? parentId}) async {
+    final created = await _onlineRemote().createFolder(name: name, parentId: parentId);
+    _folders = [..._folders, created];
+    await _persist();
+    notifyListeners();
+    return created;
+  }
+
+  @override
+  Future<NoteFolder> renameFolder({required String id, required String name}) async {
+    final renamed = await _onlineRemote().renameFolder(id: id, name: name);
+    _folders = [for (final f in _folders) f.id == id ? renamed : f];
+    await _persist();
+    notifyListeners();
+    return renamed;
+  }
+
+  @override
+  Future<void> moveFolder({required String id, String? parentId}) async {
+    await _onlineRemote().moveFolder(id: id, parentId: parentId);
+    _folders = await _onlineRemote().loadFolders();
+    await _persist();
+    notifyListeners();
+  }
+
+  @override
+  Future<void> deleteFolder(String id) async {
+    await _onlineRemote().deleteFolder(id);
+    _folders = await _onlineRemote().loadFolders();
+    await _persist();
+    notifyListeners();
   }
 
   @override
@@ -278,7 +335,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     }
     await _persist();
     notifyListeners();
-    await guest.save([], {});
+    await guest.save([], {}, []);
     if (count > 0) unawaited(fullSync());
     return count;
   }

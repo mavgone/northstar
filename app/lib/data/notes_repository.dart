@@ -7,16 +7,20 @@ abstract class NotesRepository {
   Future<Note> saveNote(Note note);
   Future<void> deleteForever(String id);
   Future<Note> createNote({required String folderId});
+  Future<NoteFolder> createFolder({required String name, String? parentId});
+  Future<NoteFolder> renameFolder({required String id, required String name});
+  Future<void> moveFolder({required String id, String? parentId});
+  Future<void> deleteFolder(String id);
 }
 
 class MockNotesRepository implements NotesRepository {
   MockNotesRepository();
-  final List<NoteFolder> _folders = const [
-    NoteFolder(id: 'f_inbox', name: 'Inbox'),
-    NoteFolder(id: 'f_product', name: 'Product'),
-    NoteFolder(id: 'f_design', name: 'Design System'),
-    NoteFolder(id: 'f_engineering', name: 'Engineering'),
-    NoteFolder(id: 'f_personal', name: 'Personal'),
+  final List<NoteFolder> _folders = [
+    const NoteFolder(id: 'f_inbox', name: 'Inbox'),
+    const NoteFolder(id: 'f_product', name: 'Product'),
+    const NoteFolder(id: 'f_design', name: 'Design System'),
+    const NoteFolder(id: 'f_engineering', name: 'Engineering'),
+    const NoteFolder(id: 'f_personal', name: 'Personal'),
   ];
   late final List<Note> _notes = _seed();
   @override
@@ -29,6 +33,47 @@ class MockNotesRepository implements NotesRepository {
   Future<List<NoteFolder>> loadFolders() async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
     return List<NoteFolder>.unmodifiable(_folders);
+  }
+
+  @override
+  Future<NoteFolder> createFolder({required String name, String? parentId}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    final folder = NoteFolder(
+      id: 'f_${DateTime.now().microsecondsSinceEpoch}',
+      name: name.trim(),
+      parentId: parentId,
+    );
+    _folders.add(folder);
+    return folder;
+  }
+
+  @override
+  Future<NoteFolder> renameFolder({required String id, required String name}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    final i = _folders.indexWhere((f) => f.id == id);
+    if (i == -1) throw Exception('Folder not found.');
+    _folders[i] = NoteFolder(id: id, name: name.trim(), parentId: _folders[i].parentId);
+    return _folders[i];
+  }
+
+  @override
+  Future<void> moveFolder({required String id, String? parentId}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    final i = _folders.indexWhere((f) => f.id == id);
+    if (i == -1) throw Exception('Folder not found.');
+    _folders[i] = NoteFolder(id: id, name: _folders[i].name, parentId: parentId);
+  }
+
+  @override
+  Future<void> deleteFolder(String id) async {
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+    final inbox = _folders.firstWhere((f) => f.name == 'Inbox', orElse: () => _folders.first);
+    final doomed = _folders.where((f) => f.id == id || f.parentId == id).map((f) => f.id).toSet();
+    for (final n in _notes.where((n) => doomed.contains(n.folderId)).toList()) {
+      final i = _notes.indexWhere((x) => x.id == n.id);
+      _notes[i] = n.copyWith(folderId: inbox.id);
+    }
+    _folders.removeWhere((f) => doomed.contains(f.id));
   }
 
   @override

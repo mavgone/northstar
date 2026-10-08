@@ -85,8 +85,8 @@ class _CommandPaletteState extends State<CommandPalette> {
       ),
       for (final f in widget.vm.folders)
         _Entry.action(
-          'Folder: ${f.name}',
-          '${widget.vm.countIn(f.id)} notes',
+          'Folder: ${widget.vm.folderPath(f.id)}',
+          '${widget.vm.countRecursive(f.id)} notes',
           LucideIcons.folder,
           () => widget.vm.setFolder(f.id),
         ),

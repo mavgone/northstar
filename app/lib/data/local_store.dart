@@ -5,9 +5,10 @@ import 'package:path_provider/path_provider.dart';
 import '../domain/models.dart';
 
 class LocalSnapshot {
-  const LocalSnapshot({required this.notes, required this.tombstones});
+  const LocalSnapshot({required this.notes, required this.tombstones, required this.folders});
   final List<Note> notes;
   final Set<String> tombstones;
+  final List<NoteFolder> folders;
 }
 
 class LocalNotesStore {
@@ -23,7 +24,7 @@ class LocalNotesStore {
   Future<LocalSnapshot> load() async {
     try {
       if (!await _file.exists()) {
-        return LocalSnapshot(notes: [], tombstones: {});
+        return LocalSnapshot(notes: [], tombstones: {}, folders: []);
       }
       final raw =
           jsonDecode(await _file.readAsString()) as Map<String, dynamic>;
@@ -33,23 +34,37 @@ class LocalNotesStore {
       final tombstones = ((raw['tombstones'] as List?) ?? const [])
           .map((e) => e.toString())
           .toSet();
-      return LocalSnapshot(notes: notes, tombstones: tombstones);
+      final folders = ((raw['folders'] as List?) ?? const [])
+          .map((e) => _folderFromJson(e as Map<String, dynamic>))
+          .toList();
+      return LocalSnapshot(notes: notes, tombstones: tombstones, folders: folders);
     } catch (_) {
-      return LocalSnapshot(notes: [], tombstones: {});
+      return LocalSnapshot(notes: [], tombstones: {}, folders: []);
     }
   }
 
-  Future<void> save(List<Note> notes, Set<String> tombstones) async {
+  Future<void> save(List<Note> notes, Set<String> tombstones, List<NoteFolder> folders) async {
     try {
       await _file.parent.create(recursive: true);
       final data = {
         'notes': notes.map(_noteToJson).toList(),
         'tombstones': tombstones.toList(),
+        'folders': folders.map(_folderToJson).toList(),
       };
       await _file.writeAsString(jsonEncode(data));
     } catch (_) {}
   }
 
+  static Map<String, dynamic> _folderToJson(NoteFolder f) => {
+        'id': f.id,
+        'name': f.name,
+        if (f.parentId != null) 'parentId': f.parentId,
+      };
+  static NoteFolder _folderFromJson(Map<String, dynamic> json) => NoteFolder(
+        id: json['id'].toString(),
+        name: (json['name'] ?? '').toString(),
+        parentId: json['parentId']?.toString(),
+      );
   static Map<String, dynamic> _noteToJson(Note n) => {
     'id': n.id,
     'title': n.title,

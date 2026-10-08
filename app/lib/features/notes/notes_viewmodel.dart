@@ -167,6 +167,75 @@ class NotesViewModel extends ChangeNotifier {
     return 'Inbox';
   }
 
+  String get inboxId {
+    for (final f in folders) {
+      if (f.name == 'Inbox' && f.parentId == null) return f.id;
+    }
+    return folders.isNotEmpty ? folders.first.id : 'Inbox';
+  }
+
+  List<NoteFolder> childrenOf(String? parentId) {
+    final out = folders.where((f) => f.parentId == parentId).toList();
+    out.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    return out;
+  }
+
+  String folderPath(String fid) {
+    final byId = {for (final f in folders) f.id: f};
+    final parts = <String>[];
+    var current = byId[fid];
+    var guard = 0;
+    while (current != null && guard++ < 32) {
+      parts.insert(0, current.name);
+      final parent = current.parentId;
+      current = parent == null ? null : byId[parent];
+    }
+    return parts.isEmpty ? 'Inbox' : parts.join(' / ');
+  }
+
+  int countRecursive(String fid) {
+    final ids = <String>{fid};
+    var grew = true;
+    while (grew) {
+      grew = false;
+      for (final f in folders) {
+        if (f.parentId != null && ids.contains(f.parentId) && ids.add(f.id)) {
+          grew = true;
+        }
+      }
+    }
+    return _all.where((n) => ids.contains(n.folderId) && n.status == NoteStatus.active).length;
+  }
+
+  Future<void> createFolder({required String name, String? parentId}) async {
+    await _repo.createFolder(name: name, parentId: parentId);
+    folders = await _repo.loadFolders();
+    notifyListeners();
+  }
+
+  Future<void> renameFolder({required String id, required String name}) async {
+    await _repo.renameFolder(id: id, name: name);
+    folders = await _repo.loadFolders();
+    notifyListeners();
+  }
+
+  Future<void> moveFolder({required String id, String? parentId}) async {
+    await _repo.moveFolder(id: id, parentId: parentId);
+    folders = await _repo.loadFolders();
+    notifyListeners();
+  }
+
+  Future<void> deleteFolder(String id) async {
+    await _repo.deleteFolder(id);
+    if (folderId != null && !_folderExists(folderId!)) {
+      folderId = null;
+    }
+    folders = await _repo.loadFolders();
+    await load();
+  }
+
+  bool _folderExists(String fid) => folders.any((f) => f.id == fid);
+
   static List<Note> _unique(List<Note> notes) {
     final seen = <String>{};
     return notes.where((n) => seen.add(n.id)).toList();
@@ -245,7 +314,7 @@ class NotesViewModel extends ChangeNotifier {
 
   Future<void> create({String? inFolder}) async {
     final note = await _repo.createNote(
-      folderId: inFolder ?? folderId ?? 'f_inbox',
+      folderId: inFolder ?? folderId ?? inboxId,
     );
     _all.removeWhere((n) => n.id == note.id);
     _all.insert(0, note);

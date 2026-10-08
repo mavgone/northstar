@@ -18,6 +18,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @DisplayName("NoteService status")
 class NoteServiceTest {
   @Mock private NoteRepository notes;
+
+  @Mock private FolderRepository folders;
   @InjectMocks private NoteService service;
   private NoteEntity active(UUID owner, UUID id) {
     var entity = new NoteEntity();
@@ -84,13 +86,20 @@ class NoteServiceTest {
   @DisplayName("create applies full payload in one row")
   void shouldCreateFull() {
     UUID owner = UUID.randomUUID();
+    UUID folderId = UUID.randomUUID();
+    var folder = new FolderEntity();
+    folder.setId(folderId);
+    folder.setOwnerId(owner);
+    folder.setName("Inbox");
+    when(folders.findByIdAndOwnerId(folderId, owner)).thenReturn(Optional.of(folder));
     when(notes.save(any(NoteEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
     var dto = service.create(
-        owner, new CreateNoteRequest("Inbox", "T", "B", List.of("x"), true));
+        owner, new CreateNoteRequest(folderId.toString(), "T", "B", List.of("x"), true));
 
     assertThat(dto.title()).isEqualTo("T");
     assertThat(dto.body()).isEqualTo("B");
     assertThat(dto.isFavorite()).isTrue();
+    assertThat(dto.folderId()).isEqualTo(folderId);
   }
 }

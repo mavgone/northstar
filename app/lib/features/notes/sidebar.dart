@@ -121,32 +121,33 @@ class Sidebar extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
-              child: Text(
-                'Folders',
-                style: AppType.caption.copyWith(
-                  color: t.textFaint,
-                  letterSpacing: 0.6,
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Folders',
+                      style: AppType.caption.copyWith(
+                        color: t.textFaint,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  ),
+                  AppPressable(
+                    onTap: () => _folderNameDialog(context, notes: notes, title: 'New folder'),
+                    tooltip: 'New folder',
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(LucideIcons.plus, size: 14, color: t.textMuted),
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                itemCount: notes.folders.length,
-                itemBuilder: (c, i) {
-                  final f = notes.folders[i];
-                  return _FolderTile(
-                    folder: f,
-                    count: notes.countIn(f.id),
-                    active:
-                        notes.view == NotesView.all && notes.folderId == f.id,
-                    isDropTarget: pendingDropFolder == f.id,
-                    onTap: () =>
-                        notes.setFolder(notes.folderId == f.id ? null : f.id),
-                    onDrop: (note) => notes.moveTo(note, f.id),
-                    onHighlight: onDropHighlight,
-                  );
-                },
+              child: _FolderTree(
+                notes: notes,
+                pendingDropFolder: pendingDropFolder,
+                onDropHighlight: onDropHighlight,
               ),
             ),
             if (notes.allTags.isNotEmpty) _tagsBlock(context),
@@ -544,6 +545,274 @@ class _RailBtn extends StatelessWidget {
   }
 }
 
+class _FolderTree extends StatefulWidget {
+  const _FolderTree({
+    required this.notes,
+    required this.pendingDropFolder,
+    required this.onDropHighlight,
+  });
+  final NotesViewModel notes;
+  final String? pendingDropFolder;
+  final ValueChanged<String?>? onDropHighlight;
+  @override
+  State<_FolderTree> createState() => _FolderTreeState();
+}
+
+class _FolderTreeState extends State<_FolderTree> {
+  final Set<String> _collapsed = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final notes = widget.notes;
+    final rows = <Widget>[];
+    void addLevel(String? parentId, int depth) {
+      for (final f in notes.childrenOf(parentId)) {
+        final kids = notes.childrenOf(f.id);
+        final open = !_collapsed.contains(f.id);
+        rows.add(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(width: 8.0 + depth * 14.0),
+              if (kids.isNotEmpty)
+                AppPressable(
+                  onTap: () => setState(() {
+                    if (open) {
+                      _collapsed.add(f.id);
+                    } else {
+                      _collapsed.remove(f.id);
+                    }
+                  }),
+                  tooltip: open ? 'Collapse' : 'Expand',
+                  child: Padding(
+                    padding: const EdgeInsets.all(3),
+                    child: Icon(
+                      open ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+                      size: 13,
+                      color: context.tokens.textFaint,
+                    ),
+                  ),
+                )
+              else
+                const SizedBox(width: 19),
+              Expanded(
+                child: _FolderTile(
+                  folder: f,
+                  count: notes.countRecursive(f.id),
+                  active: notes.view == NotesView.all && notes.folderId == f.id,
+                  isDropTarget: widget.pendingDropFolder == f.id,
+                  onTap: () => notes.setFolder(notes.folderId == f.id ? null : f.id),
+                  onDrop: (note) => notes.moveTo(note, f.id),
+                  onHighlight: widget.onDropHighlight,
+                ),
+              ),
+              _FolderMenu(folder: f, notes: notes),
+            ],
+          ),
+        );
+        if (open) addLevel(f.id, depth + 1);
+      }
+    }
+
+    addLevel(null, 0);
+    return ListView(
+      padding: const EdgeInsets.only(right: 8),
+      children: rows,
+    );
+  }
+}
+
+class _FolderMenu extends StatelessWidget {
+  const _FolderMenu({required this.folder, required this.notes});
+  final NoteFolder folder;
+  final NotesViewModel notes;
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return PopupMenuButton<String>(
+      tooltip: 'Folder actions',
+      color: t.panel,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+      icon: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Icon(LucideIcons.moreHorizontal, size: 14, color: t.textFaint),
+      ),
+      onSelected: (v) {
+        if (v == 'sub') {
+          _folderNameDialog(context, notes: notes, title: 'New subfolder', parentId: folder.id);
+        } else if (v == 'rename') {
+          _folderNameDialog(context, notes: notes, title: 'Rename folder', initial: folder.name,
+              onSubmit: (name) => notes.renameFolder(id: folder.id, name: name));
+        } else if (v == 'move-root' && folder.parentId != null) {
+          _runFolderAction(context, notes, () => notes.moveFolder(id: folder.id));
+        } else if (v == 'delete') {
+          _confirmFolderDelete(context, notes, folder);
+        }
+      },
+      itemBuilder: (c) => [
+        _menuItem(t, 'sub', LucideIcons.folderPlus, 'New subfolder'),
+        _menuItem(t, 'rename', LucideIcons.pen, 'Rename'),
+        if (folder.parentId != null)
+          _menuItem(t, 'move-root', LucideIcons.arrowUpFromLine, 'Move to root'),
+        _menuItem(t, 'delete', LucideIcons.trash2, 'Delete'),
+      ],
+    );
+  }
+
+  PopupMenuItem<String> _menuItem(AppTokens t, String value, IconData icon, String label) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: t.textMuted),
+          const SizedBox(width: 8),
+          Text(label, style: AppType.small.copyWith(color: t.text)),
+        ],
+      ),
+    );
+  }
+}
+
+Future<void> _folderNameDialog(
+  BuildContext context, {
+  required NotesViewModel notes,
+  required String title,
+  String? initial,
+  String? parentId,
+  Future<void> Function(String name)? onSubmit,
+}) async {
+  final ctrl = TextEditingController(text: initial ?? '');
+  String? error;
+  await showDialog<void>(
+    context: context,
+    builder: (context) {
+      final t = context.tokens;
+      return StatefulBuilder(
+        builder: (context, setDialog) => AlertDialog(
+          backgroundColor: t.panel,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+          title: Text(title, style: AppType.headline.copyWith(color: t.text)),
+          content: SizedBox(
+            width: 320,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppTextField(controller: ctrl, hint: 'Folder name', prefix: LucideIcons.folder, autofocus: true,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _submitFolder(context, setDialog, notes, ctrl, parentId, onSubmit, (e) => error = e)),
+                if (error != null) ...[
+                  const SizedBox(height: 8),
+                  Text(error!, style: AppType.small.copyWith(color: t.danger)),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            AppButton(label: 'Cancel', icon: LucideIcons.x, onPressed: () => Navigator.of(context).pop()),
+            AppButton(
+              label: 'Save',
+              icon: LucideIcons.check,
+              kind: AppButtonKind.primary,
+              onPressed: () => _submitFolder(context, setDialog, notes, ctrl, parentId, onSubmit, (e) => error = e),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+  ctrl.dispose();
+}
+
+Future<void> _submitFolder(
+  BuildContext context,
+  StateSetter setDialog,
+  NotesViewModel notes,
+  TextEditingController ctrl,
+  String? parentId,
+  Future<void> Function(String name)? onSubmit,
+  void Function(String?) setError,
+) async {
+  final name = ctrl.text.trim();
+  if (name.isEmpty) {
+    setDialog(() => setError('Enter a folder name.'));
+    return;
+  }
+  try {
+    if (onSubmit != null) {
+      await onSubmit(name);
+    } else {
+      await notes.createFolder(name: name, parentId: parentId);
+    }
+    if (context.mounted) Navigator.of(context).pop();
+  } catch (e) {
+    setDialog(() => setError(e.toString().replaceFirst('Exception: ', '')));
+  }
+}
+
+Future<void> _confirmFolderDelete(BuildContext context, NotesViewModel notes, NoteFolder folder) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (c) {
+      final t = context.tokens;
+      return AlertDialog(
+        backgroundColor: t.panel,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+        title: Text('Delete "${folder.name}"?', style: AppType.headline.copyWith(color: t.text)),
+        content: Text('Notes move to Inbox. Subfolders go with it.',
+            style: AppType.small.copyWith(color: t.textMuted)),
+        actions: [
+          AppButton(label: 'Cancel', icon: LucideIcons.x, onPressed: () => Navigator.pop(c, false)),
+          AppButton(
+            label: 'Delete',
+            icon: LucideIcons.trash2,
+            kind: AppButtonKind.danger,
+            onPressed: () => Navigator.pop(c, true),
+          ),
+        ],
+      );
+    },
+  );
+  if (ok == true && context.mounted) {
+    try {
+      await notes.deleteFolder(folder.id);
+    } catch (e) {
+      if (!context.mounted) return;
+      final t = context.tokens;
+      await showDialog<void>(
+        context: context,
+        builder: (c) => AlertDialog(
+          backgroundColor: t.panel,
+          content: Text(e.toString().replaceFirst('Exception: ', ''),
+              style: AppType.small.copyWith(color: t.danger)),
+          actions: [
+            AppButton(label: 'OK', icon: LucideIcons.check, onPressed: () => Navigator.pop(c)),
+          ],
+        ),
+      );
+    }
+  }
+}
+
+Future<void> _runFolderAction(BuildContext context, NotesViewModel notes, Future<void> Function() call) async {
+  try {
+    await call();
+  } catch (e) {
+    if (!context.mounted) return;
+    final t = context.tokens;
+    await showDialog<void>(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: t.panel,
+        content: Text(e.toString().replaceFirst('Exception: ', ''),
+            style: AppType.small.copyWith(color: t.danger)),
+        actions: [
+          AppButton(label: 'OK', icon: LucideIcons.check, onPressed: () => Navigator.pop(c)),
+        ],
+      ),
+    );
+  }
+}
 class _FolderTile extends StatelessWidget {
   const _FolderTile({
     required this.folder,

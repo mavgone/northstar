@@ -23,6 +23,7 @@ class AssignedUuidTest {
     var entity = new NoteEntity();
     entity.setId(id);
     entity.setOwnerId(UUID.randomUUID());
+    entity.setFolderId(UUID.randomUUID());
     entity.setTitle("T");
     var saved = notes.saveAndFlush(entity);
     assertThat(saved.getId()).isEqualTo(id);

@@ -26,8 +26,8 @@ public class NoteEntity {
   private UUID id = UUID.randomUUID();
   @Column(name = "owner_id", nullable = false)
   private UUID ownerId;
-  @Column(nullable = false, length = 80)
-  private String folder = "Inbox";
+  @Column(name = "folder_id", nullable = false)
+  private UUID folderId;
   @Column(nullable = false, length = 200)
   private String title = "Untitled";
   @Column(nullable = false, columnDefinition = "TEXT")
