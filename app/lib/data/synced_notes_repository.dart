@@ -321,11 +321,15 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     await _persist();
     notifyListeners();
     await _pushBestEffort((remote) async {
-      final created = await remote.createNote(folderId: folderId);
-      final j = _mem.indexWhere((n) => n.id == note.id);
-      if (j != -1) {
-        _mem[j] = created;
-        onRemap?.call(note.id, created.id);
+      final pushed = await _pushOne(remote, note);
+      if (pushed.id != note.id) {
+        final j = _mem.indexWhere((n) => n.id == note.id);
+        if (j != -1) _mem[j] = pushed;
+        onRemap?.call(note.id, pushed.id);
+        await _persist();
+      } else {
+        final j = _mem.indexWhere((n) => n.id == note.id);
+        if (j != -1) _mem[j] = pushed;
         await _persist();
       }
       notifyListeners();
