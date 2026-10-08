@@ -1,0 +1,8 @@
+{
+  http_port 80
+  https_port 8443
+}
+
+northstar.info.gf {
+  reverse_proxy app:8080
+}
