@@ -24,6 +24,7 @@ class AuthServiceTest {
   @Mock private UserRepository users;
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private AuthenticationManager authenticationManager;
+  @Mock private dev.northstar.notes.notes.FolderRepository folders;
   private AuthService authService;
   @BeforeEach
   void setUp() {
@@ -31,7 +32,7 @@ class AuthServiceTest {
     props.setSecret("test-secret-min-32-chars-for-unit-tests-123456");
     props.setIssuer("northstar-notes-test");
     authService =
-        new AuthService(users, passwordEncoder, new JwtService(props), authenticationManager);
+        new AuthService(users, passwordEncoder, new JwtService(props), authenticationManager, folders);
   }
   @Nested
   @DisplayName("signUp")

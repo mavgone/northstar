@@ -5,6 +5,8 @@ import dev.northstar.notes.auth.dto.SignInRequest;
 import dev.northstar.notes.auth.dto.SignUpRequest;
 import dev.northstar.notes.auth.dto.UpdateProfileRequest;
 import dev.northstar.notes.auth.dto.UserDto;
+import dev.northstar.notes.notes.FolderEntity;
+import dev.northstar.notes.notes.FolderRepository;
 import dev.northstar.notes.shared.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +25,7 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final JwtService jwtService;
   private final AuthenticationManager authenticationManager;
+  private final FolderRepository folders;
   @Transactional
   public AuthResponse signUp(SignUpRequest req) {
     String email = req.email().trim().toLowerCase();
@@ -36,6 +39,10 @@ public class AuthService {
     } catch (DataIntegrityViolationException e) {
       throw new IllegalArgumentException("An account with this email already exists.");
     }
+    var inbox = new FolderEntity();
+    inbox.setOwnerId(user.getId());
+    inbox.setName("Inbox");
+    folders.save(inbox);
     log.info("User registered: {}", user.getId());
     return tokens(user);
   }
