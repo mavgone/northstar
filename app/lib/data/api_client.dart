@@ -73,7 +73,7 @@ class ApiClient {
         Uri.parse('$baseUrl$path'),
         headers: _headers(auth: auth),
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 15));
     } on Exception {
       throw ApiException(
         'Could not reach server. Check connection and retry.',
@@ -97,7 +97,7 @@ class ApiClient {
         Uri.parse('$baseUrl$path'),
         headers: _headers(auth: true),
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 15));
     } on Exception {
       throw ApiException(
         'Could not reach server. Check connection and retry.',
@@ -121,7 +121,7 @@ class ApiClient {
         Uri.parse('$baseUrl$path'),
         headers: _headers(auth: true),
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 15));
     } on Exception {
       throw ApiException(
         'Could not reach server. Check connection and retry.',
@@ -141,7 +141,7 @@ class ApiClient {
       res = await _http.get(
         Uri.parse('$baseUrl$path'),
         headers: _headers(auth: true),
-      );
+      ).timeout(const Duration(seconds: 15));
     } on Exception {
       throw ApiException(
         'Could not reach server. Check connection and retry.',
@@ -162,7 +162,7 @@ class ApiClient {
       res = await _http.delete(
         Uri.parse('$baseUrl$path'),
         headers: _headers(auth: true),
-      );
+      ).timeout(const Duration(seconds: 15));
     } on Exception {
       throw ApiException(
         'Could not reach server. Check connection and retry.',
@@ -183,7 +183,7 @@ class ApiClient {
         Uri.parse('$baseUrl/auth/refresh'),
         headers: const {'Content-Type': 'application/json'},
         body: jsonEncode({'refreshToken': refresh}),
-      );
+      ).timeout(const Duration(seconds: 15));
       if (res.statusCode >= 400) {
         tokens.clear();
         return false;

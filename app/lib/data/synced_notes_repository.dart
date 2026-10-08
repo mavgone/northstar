@@ -218,8 +218,20 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
     return remote;
   }
 
+  Future<void> _ensureFolders() async {
+    if (_folders.isNotEmpty) return;
+    final remote = _remote;
+    if (remote == null || !_monitor.online) return;
+    try {
+      _folders = await remote.loadFolders();
+      await _persist();
+      notifyListeners();
+    } catch (_) {}
+  }
+
   @override
   Future<NoteFolder> createFolder({required String name, String? parentId}) async {
+    await _ensureFolders();
     final created = await _onlineRemote().createFolder(name: name, parentId: parentId);
     _folders = [..._folders, created];
     await _persist();
@@ -229,6 +241,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
 
   @override
   Future<NoteFolder> renameFolder({required String id, required String name}) async {
+    await _ensureFolders();
     final renamed = await _onlineRemote().renameFolder(id: id, name: name);
     _folders = [for (final f in _folders) f.id == id ? renamed : f];
     await _persist();
@@ -238,6 +251,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
 
   @override
   Future<void> moveFolder({required String id, String? parentId}) async {
+    await _ensureFolders();
     await _onlineRemote().moveFolder(id: id, parentId: parentId);
     _folders = await _onlineRemote().loadFolders();
     await _persist();
@@ -246,6 +260,7 @@ class SyncedNotesRepository extends ChangeNotifier implements NotesRepository {
 
   @override
   Future<void> deleteFolder(String id) async {
+    await _ensureFolders();
     await _onlineRemote().deleteFolder(id);
     _folders = await _onlineRemote().loadFolders();
     await _persist();

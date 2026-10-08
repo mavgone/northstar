@@ -100,6 +100,7 @@ class _NoteAppState extends State<NoteApp> {
   Future<void> _seedWelcome(String userId, {bool force = false}) async {
     if (_seeding) return;
     _seeding = true;
+    String? createdId;
     try {
       final key = 'welcomed_$userId';
       bool done = false;
@@ -120,14 +121,31 @@ class _NoteAppState extends State<NoteApp> {
         } catch (_) {}
         return;
       }
-      await _notes.create(inFolder: 'Inbox');
+      await _notes.create(inFolder: _notes.inboxId);
       final note = _notes.selected;
       if (note != null) {
+        createdId = note.id;
         await _notes.patch(note, title: 'Добро пожаловать', body: _welcomeBody);
       }
       try {
         await widget.prefs?.setBool(key, true);
       } catch (_) {}
+    } catch (_) {
+      if (createdId != null) {
+        try {
+          Note? created;
+          for (final n in _notes.allNotes) {
+            if (n.id == createdId) {
+              created = n;
+              break;
+            }
+          }
+          final blank = created != null &&
+              (created.title.trim().isEmpty || created.title == 'Untitled') &&
+              created.body.trim().isEmpty;
+          if (blank) await _notes.deleteForever(created);
+        } catch (_) {}
+      }
     } finally {
       _seeding = false;
     }
