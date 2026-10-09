@@ -80,7 +80,7 @@ class ApiClient {
         0,
       );
     }
-    if (res.statusCode == 401 && auth && await _tryRefresh()) {
+    if (_needsRefresh(res) && auth && await _tryRefresh()) {
       return post(path, body, auth: true);
     }
     if (res.statusCode >= 400) _throw(res);
@@ -104,7 +104,7 @@ class ApiClient {
         0,
       );
     }
-    if (res.statusCode == 401 && await _tryRefresh()) {
+    if (_needsRefresh(res) && await _tryRefresh()) {
       return put(path, body);
     }
     if (res.statusCode >= 400) _throw(res);
@@ -128,7 +128,7 @@ class ApiClient {
         0,
       );
     }
-    if (res.statusCode == 401 && await _tryRefresh()) {
+    if (_needsRefresh(res) && await _tryRefresh()) {
       return patch(path, body);
     }
     if (res.statusCode >= 400) _throw(res);
@@ -148,7 +148,7 @@ class ApiClient {
         0,
       );
     }
-    if (res.statusCode == 401 && await _tryRefresh()) {
+    if (_needsRefresh(res) && await _tryRefresh()) {
       return get(path);
     }
     if (res.statusCode >= 400) _throw(res);
@@ -169,12 +169,14 @@ class ApiClient {
         0,
       );
     }
-    if (res.statusCode == 401 && await _tryRefresh()) {
+    if (_needsRefresh(res) && await _tryRefresh()) {
       return delete(path);
     }
     if (res.statusCode >= 400) _throw(res);
   }
 
+  static bool _needsRefresh(http.Response res) =>
+      res.statusCode == 401 || res.statusCode == 403;
   Future<bool> _tryRefresh() async {
     final refresh = tokens.refreshToken;
     if (refresh == null) return false;

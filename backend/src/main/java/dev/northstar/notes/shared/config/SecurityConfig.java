@@ -33,6 +33,14 @@ public class SecurityConfig {
         .csrf(AbstractHttpConfigurer::disable)
         .cors(cors -> cors.configurationSource(corsSource()))
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(e -> e.authenticationEntryPoint((request, response, exception) -> {
+              response.setStatus(401);
+              response.setContentType("application/problem+json");
+              response.getWriter().write(
+                  "{\"type\":\"https://northstar.dev/errors/unauthorized\",\"title\":\"Unauthorized\","
+                      + "\"status\":401,\"detail\":\"Invalid email or password.\",\"instance\":\"\",\"timestamp\":\""
+                      + java.time.Instant.now().toString() + "\"}");
+            }))
         .authorizeHttpRequests(
             auth ->
                 auth.requestMatchers("/api/v1/auth/**").permitAll()
