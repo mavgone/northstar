@@ -680,73 +680,111 @@ Future<void> _folderNameDialog(
   String? initial,
   String? parentId,
   Future<void> Function(String name)? onSubmit,
-}) async {
-  final ctrl = TextEditingController(text: initial ?? '');
-  String? error;
-  await showDialog<void>(
+}) {
+  return showDialog<void>(
     context: context,
-    builder: (context) {
-      final t = context.tokens;
-      return StatefulBuilder(
-        builder: (context, setDialog) => AlertDialog(
-          backgroundColor: t.panel,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
-          title: Text(title, style: AppType.headline.copyWith(color: t.text)),
-          content: SizedBox(
-            width: 320,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                AppTextField(controller: ctrl, hint: 'Folder name', prefix: LucideIcons.folder, autofocus: true,
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _submitFolder(context, setDialog, notes, ctrl, parentId, onSubmit, (e) => error = e)),
-                if (error != null) ...[
-                  const SizedBox(height: 8),
-                  Text(error!, style: AppType.small.copyWith(color: t.danger)),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            AppButton(label: 'Cancel', icon: LucideIcons.x, onPressed: () => Navigator.of(context).pop()),
-            AppButton(
-              label: 'Save',
-              icon: LucideIcons.check,
-              kind: AppButtonKind.primary,
-              onPressed: () => _submitFolder(context, setDialog, notes, ctrl, parentId, onSubmit, (e) => error = e),
-            ),
-          ],
-        ),
-      );
-    },
+    builder: (context) => _FolderNameDialog(
+      notes: notes,
+      title: title,
+      initial: initial,
+      parentId: parentId,
+      onSubmit: onSubmit,
+    ),
   );
-  ctrl.dispose();
 }
 
-Future<void> _submitFolder(
-  BuildContext context,
-  StateSetter setDialog,
-  NotesViewModel notes,
-  TextEditingController ctrl,
-  String? parentId,
-  Future<void> Function(String name)? onSubmit,
-  void Function(String?) setError,
-) async {
-  final name = ctrl.text.trim();
-  if (name.isEmpty) {
-    setDialog(() => setError('Enter a folder name.'));
-    return;
+class _FolderNameDialog extends StatefulWidget {
+  const _FolderNameDialog({
+    required this.notes,
+    required this.title,
+    this.initial,
+    this.parentId,
+    this.onSubmit,
+  });
+  final NotesViewModel notes;
+  final String title;
+  final String? initial;
+  final String? parentId;
+  final Future<void> Function(String name)? onSubmit;
+  @override
+  State<_FolderNameDialog> createState() => _FolderNameDialogState();
+}
+
+class _FolderNameDialogState extends State<_FolderNameDialog> {
+  late final TextEditingController _ctrl = TextEditingController(text: widget.initial ?? '');
+  String? _error;
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
   }
-  try {
-    if (onSubmit != null) {
-      await onSubmit(name);
-    } else {
-      await notes.createFolder(name: name, parentId: parentId);
+
+  Future<void> _submit() async {
+    final name = _ctrl.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Enter a folder name.');
+      return;
     }
-    if (context.mounted) Navigator.of(context).pop();
-  } catch (e) {
-    setDialog(() => setError(e.toString().replaceFirst('Exception: ', '')));
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      if (widget.onSubmit != null) {
+        await widget.onSubmit!(name);
+      } else {
+        await widget.notes.createFolder(name: name, parentId: widget.parentId);
+      }
+      if (mounted) Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = context.tokens;
+    return AlertDialog(
+      backgroundColor: t.panel,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.xl)),
+      title: Text(widget.title, style: AppType.headline.copyWith(color: t.text)),
+      content: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppTextField(
+              controller: _ctrl,
+              hint: 'Folder name',
+              prefix: LucideIcons.folder,
+              autofocus: true,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: AppType.small.copyWith(color: t.danger)),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        AppButton(label: 'Cancel', icon: LucideIcons.x, onPressed: () => Navigator.of(context).pop()),
+        AppButton(
+          label: 'Save',
+          icon: LucideIcons.check,
+          kind: AppButtonKind.primary,
+          loading: _busy,
+          onPressed: _busy ? null : _submit,
+        ),
+      ],
+    );
   }
 }
 
